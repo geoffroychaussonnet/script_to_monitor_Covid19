@@ -34,26 +34,30 @@ def evolution_country(strCountry,filterDate):
     return evolution[filterDate]
 
 
-def get_trend(dates,evol1,startMonth,startDay,fitParam):
-    fittingPeriod = fitParam[0]
-    extrapolPeriod = fitParam[1]
-    startDate = datetime.date(2020, startMonth,startDay)
-    endDate = startDate + dt.timedelta(days=fittingPeriod+1)
-    bcorrelDate = (dates>=startDate) * (dates<=endDate)
-    correlDate = dates[bcorrelDate]
-    x = np.arange(sum(bcorrelDate))
-    y = evol1[bcorrelDate]
-    p1=polyfit(x,log(y),1)
+def get_trend(dates,evol1,fitParam,extParam):
+    dtFitBeg = fitParam[0]
+    dtFitEnd = fitParam[1]
+    dtExtBeg = extParam[0]
+    dtExtEnd = extParam[1]
+    print("Time windows for fitting: ", dateOut(dtFitBeg), " - ", dateOut(dtFitEnd))
+    print("Time windows for extrapo: ", dateOut(dtExtBeg), " - ", dateOut(dtExtEnd))
+    bfitDate = (dates>=dtFitBeg) * (dates<=dtFitEnd)
+    fitDate = dates[bfitDate]
+    Ndfit = (dtFitEnd - dtFitBeg).days + 1
+    Ndext = (dtExtEnd - dtExtBeg).days + 1
+    Ndtot = (dtExtEnd - dtFitBeg).days + 1
+    xfit = np.arange(Ndfit)
+    xext = np.arange(Ndtot-Ndext,Ndtot)
+
+    yfit = evol1[bfitDate]
+    p1=polyfit(xfit,log(yfit),1)
     print(p1)
-    xpredict = np.arange(sum(bcorrelDate)-1,sum(bcorrelDate)+extrapolPeriod)
-    pol = exp(polyval(p1,xpredict))
-    correl1 = pol
-    xcorrel1 = dateax[bcorrelDate].tolist()
-    xcorrel1 = [dateax[bcorrelDate][-1]]
-    correlDate = correlDate.tolist()
-    for i in range(extrapolPeriod):
-        correlDate.append(correlDate[-1] + dt.timedelta(days=1))
-        xcorrel1.append(dateOut(correlDate[-1]))
+    yext = exp(polyval(p1,xext))
+    correl1 = yext
+
+    xcorrel1 = []
+    for i in range(Ndext):
+        xcorrel1.append(dateOut(dtExtBeg + dt.timedelta(days=i)))
 
     return xcorrel1, correl1
 
@@ -67,6 +71,7 @@ def dateIn(strDate):
     return datetime.date(year, month,day)
 
 def plot_country(strCountry,filterDate,dates,fitParam,quarParam,ax):
+    print("########## Treating country: ", strCountry, " #############")
     quarDate = quarParam
     fittingPeriod = fitParam[0]
     extrapolPeriod = fitParam[1]
@@ -77,32 +82,37 @@ def plot_country(strCountry,filterDate,dates,fitParam,quarParam,ax):
     # find the quarantine date 
     iQuar = np.where(dateax==quarDate)
 
+    fitParam1 = []
+    extParam1 = []
     # Define the period for the trend
     if sum(iQuar) > 0: # Quarantine found
-        quarDateIn = dateIn(quarDate)
+        dtFitEnd = dateIn(quarDate)
 
-        correlDateStart2 = dateIn(quarDate)
-        correlDateEnd2 = dt.date.today()
-        fittingPeriod2 = (correlDateEnd2 - correlDateStart2).days + 1
-        startMonth2 = correlDateStart2.month
-        startDay2 = correlDateStart2.day
-        fitParam2 = [fittingPeriod2, extrapolPeriod]
+        fitParam2 = []
+        extParam2 = []
+        fitParam2.append(dateIn(quarDate))
+        fitParam2.append(dt.date.today() - dt.timedelta(days=1))
+        extParam2.append(dtFitEnd)
+        extParam2.append(dtFitEnd + dt.timedelta(days=extrapolPeriod+1))
     else:
-        quarDateIn = dt.date.today()
-    correlDateStart = quarDateIn - dt.timedelta(days=fittingPeriod+1)
-    print("Start correl date before quanratine (or today) :", dateOut(correlDateStart))
-    startMonth = correlDateStart.month
-    startDay = correlDateStart.day
+        dtFitEnd = dt.date.today() - dt.timedelta(days=1)
+    dtFitBeg = dtFitEnd - dt.timedelta(days=fittingPeriod+1)
+    dtExtBeg = dtFitEnd
+    dtExtEnd = dtExtBeg + dt.timedelta(days=extrapolPeriod+1)
+    fitParam1.append(dtFitBeg)
+    fitParam1.append(dtFitEnd)
+    extParam1.append(dtExtBeg)
+    extParam1.append(dtExtEnd)
 
     p = ax.semilogy(dateax,evol1,ls='-',lw=4.0,label=strCountry)
     col = p[0].get_color()
 
     # Get the trend
-    xcorrel1, correl1 = get_trend(dates,evol1,startMonth,startDay,fitParam)
-    ax.semilogy(xcorrel1,correl1,ls='-',lw=2.0,c=col)
+    xcorrel1, correl1 = get_trend(dates,evol1,fitParam1,extParam1)
+    ax.semilogy(xcorrel1,correl1,ls='--',lw=2.0,c=col)
     
     if sum(iQuar) > 0: # Quarantine found
-        xcorrel2, correl2 = get_trend(dates,evol1,startMonth2,startDay2,fitParam2)
+        xcorrel2, correl2 = get_trend(dates,evol1,fitParam2,extParam2)
         ax.semilogy(xcorrel2,correl2,ls='-',lw=2.0,c=col)
 
     # Plot the quarantine date
@@ -131,8 +141,8 @@ plot_country("France",filterDate,dates,fitParam,'3/17/20',ax)
 plot_country("Germany",filterDate,dates,fitParam,'3/19/20',ax)
 plot_country("Italy",filterDate,dates,fitParam,'3/9/20',ax)
 plot_country("Spain",filterDate,dates,fitParam,'3/14/20',ax)
-plot_country("United Kingdom",filterDate,dates,fitParam,'3/22/20',ax)
-plot_country("US",filterDate,dates,fitParam,'3/22/20',ax)
+plot_country("United Kingdom",filterDate,dates,fitParam,'5/22/20',ax)
+plot_country("US",filterDate,dates,fitParam,'5/22/20',ax)
 #plot_country("Iran",filterDate,dates,'3/22/20',ax)
 
 ax.set_title("Cumulated deaths in some Western countries\n (Source: Johns Hopkins University)")
