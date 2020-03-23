@@ -19,16 +19,19 @@ import datetime as dt
 # Path to the folder containing the time series:
 path="../csse_covid_19_data/csse_covid_19_time_series/"
 daysInterval = 7   # To set Major x-axis:
-startDate = datetime.date(2020, 1,22)   # Start date of the plot:
+startDate = datetime.date(2020, 2,22)   # Start date of the plot:
 extrapolPeriod = 14     # How many days to extrapolate?
 fittingPeriod = 8       # On how long do we fit the data?
 
-#field = "Confirmed"
-#field = "Deaths"
-field = "Active"
+#yscale = 'linear'
+yscale = 'log'
 
-evolutionType = "cumulative"
-#evolutionType = "daily"
+field = "Confirmed"
+#field = "Deaths"
+#field = "Active"
+
+#evolutionType = "cumulative"
+evolutionType = "daily"
 ################ Parameters to define manually ######################
 
 
@@ -40,7 +43,9 @@ def evolution_single(strCountry,data):
     size=len(data.iloc[icountry[0]].values[4:])
     evolution = zeros(size,dtype=int)
     for ic in icountry:
-        evolution[:] += data.iloc[ic].values[4:].astype(int)
+        locRegion = data.iloc[ic].values[4:]
+        locRegion[isnan(locRegion.tolist())] = 0
+        evolution[:] += locRegion.astype(int)
     return evolution
 
 def evolution_country(strCountry,dataParam):
@@ -79,16 +84,25 @@ def get_trend(dates,evol1,fitParam,extParam):
     xext = np.arange(Ndtot-Ndext,Ndtot)
 
     yfit = evol1[bfitDate]
-    p1=polyfit(xfit,log(yfit),1)
+    nz = (yfit>0)
+    if sum(nz)>0:
+        p1=polyfit(xfit[nz],log(yfit[nz]),1)
+        yext = exp(polyval(p1,xext))
+    else:
+        p1=polyfit(xfit,log(-yfit),1)
+        yext = exp(-polyval(p1,xext))
     print(p1)
-    yext = exp(polyval(p1,xext))
     correl1 = yext
 
     xcorrel1 = []
     for i in range(Ndext):
         xcorrel1.append(dateOut(dtExtBeg + dt.timedelta(days=i)))
 
-    return xcorrel1, correl1
+    rate=correl1[-1]/correl1[-2]-1
+    if rate>0: strRate='+%.1f%%' %(rate*100)
+    else:strRate='%.1f%%' %(rate*100)
+
+    return xcorrel1, correl1, strRate
 
 def dateOut(date):
     return date.strftime('%m/%d/%y').lstrip("0").replace("/0", "/")
@@ -99,7 +113,7 @@ def dateIn(strDate):
     year = int("20%s" %spl[2])
     return datetime.date(year, month,day)
 
-def plot_country(strCountry,dataParam,fitParam,quarParam,ax):
+def plot_country(strCountry,dataParam,displayParam,fitParam,quarParam,ax):
     print("########## Treating country: ", strCountry, " #############")
     quarDate = quarParam
     fittingPeriod = fitParam[0]
@@ -133,21 +147,25 @@ def plot_country(strCountry,dataParam,fitParam,quarParam,ax):
     extParam1.append(dtExtBeg)
     extParam1.append(dtExtEnd)
 
+    if displayParam['YScale'] == 'log':
+        evol1 = np.ma.masked_where(evol1<=0,evol1)
     p = ax.semilogy(dataParam['DateAxis'],evol1,ls='-',lw=4.0,label=strCountry)
     col = p[0].get_color()
 
     # Get the trend
-    xcorrel1, correl1 = get_trend(dataParam['Dates'],evol1,fitParam1,extParam1)
-    ax.semilogy(xcorrel1,correl1,ls='--',lw=2.0,c=col)
-    
+    xextrapol, yextrapol, strRate = get_trend(dataParam['Dates'],evol1,fitParam1,extParam1)
+    ax.semilogy(xextrapol,yextrapol,ls='--',lw=2.0,c=col)
+    ax.annotate(strRate, xy=(xextrapol[-1],yextrapol[-1]), xytext=(3, 3), textcoords="offset points", ha='center', va='bottom',color=col,weight='bold')
+
     if sum(iQuar) > 0: # Quarantine found
-        xcorrel2, correl2 = get_trend(dataParam['Dates'],evol1,fitParam2,extParam2)
-        ax.semilogy(xcorrel2,correl2,ls='-',lw=2.0,c=col)
+        xextrapol, yextrapol, strRate = get_trend(dataParam['Dates'],evol1,fitParam2,extParam2)
+        ax.semilogy(xextrapol,yextrapol,ls='-',lw=2.0,c=col)
+        ax.annotate(strRate, xy=(xextrapol[-1],yextrapol[-1]), xytext=(3, 3), textcoords="offset points", ha='center', va='bottom',color=col,weight='bold')
 
     # Plot the quarantine date
     ax.scatter(dataParam['DateAxis'][iQuar[0]],evol1[iQuar[0]],c=col,s=300,marker="X")
 
-def setDisplayParam(field,evolutionType):
+def setDisplayParam(field,evolutionType,yscale):
     displayParam = {}
     if field=="Confirmed":
         txtField = "confirmed cases"
@@ -167,8 +185,9 @@ def setDisplayParam(field,evolutionType):
     displayParam['YaxisLabel'] = txtYaxis
 
     strDateToday = dt.date.today().strftime("%Y%m%d")
-    fname = "../evolCovid19_%s_%s_stand%s.pdf" %(txtEvol,txtField,strDateToday)
-    displayParam['FileName'] = fname
+    fname = "../%s_evolCovid19_%s_%s.pdf" %(strDateToday,txtEvol,txtField)
+    displayParam['FileName'] = fname.replace(" ","_")
+    displayParam['YScale'] = yscale
     return displayParam
 
 def loadData(path,field,evolutionType,startDate=datetime.date(2020, 1,1)):
@@ -197,7 +216,7 @@ def loadData(path,field,evolutionType,startDate=datetime.date(2020, 1,1)):
 ######################## Definition of Functions ############################
 
 dataParam = loadData(path,field,evolutionType,startDate=startDate)
-displayParam = setDisplayParam(field,evolutionType)
+displayParam = setDisplayParam(field,evolutionType,yscale)
 
 fitParam = [fittingPeriod, extrapolPeriod]
 
@@ -205,18 +224,22 @@ close(1)
 fig = figure(1)
 ax = fig.add_subplot(111)
 
-
-plot_country("France",dataParam,fitParam,'3/17/20',ax)
-plot_country("Germany",dataParam,fitParam,'3/19/20',ax)
-plot_country("Italy",dataParam,fitParam,'3/9/20',ax)
-plot_country("Spain",dataParam,fitParam,'3/14/20',ax)
-#plot_country("United Kingdom",dataParam,fitParam,'5/22/20',ax)
-#plot_country("US",dataParam,fitParam,'5/22/20',ax)
-plot_country("China",dataParam,fitParam,'1/22/20',ax)
-plot_country("Korea, South",dataParam,fitParam,'5/22/20',ax)
+#plot_country("France",dataParam,displayParam,fitParam,'3/17/20',ax)
+plot_country("Germany",dataParam,displayParam,fitParam,'3/19/20',ax)
+plot_country("Italy",dataParam,displayParam,fitParam,'3/9/20',ax)
+#plot_country("Spain",dataParam,displayParam,fitParam,'3/14/20',ax)
+plot_country("United Kingdom",dataParam,displayParam,fitParam,'5/22/20',ax)
+plot_country("US",dataParam,displayParam,fitParam,'5/22/20',ax)
+#plot_country("Norway",dataParam,displayParam,fitParam,'5/22/20',ax)
+#plot_country("Sweden",dataParam,displayParam,fitParam,'5/22/20',ax)
+#plot_country("Finland",dataParam,displayParam,fitParam,'5/22/20',ax)
+#plot_country("Canada",dataParam,displayParam,fitParam,'5/22/20',ax)
+#plot_country("Switzerland",dataParam,displayParam,fitParam,'5/22/20',ax)
+#plot_country("China",dataParam,displayParam,fitParam,'1/22/20',ax)
+plot_country("Korea, South",dataParam,displayParam,fitParam,'5/22/20',ax)
 
 ax.set_title(displayParam['title'])
-#ax.set_yscale('linear')
+ax.set_yscale(displayParam['YScale'])
 ax.set_xlabel("Date")
 ax.xaxis.set_major_locator(ticker.MultipleLocator(daysInterval))
 ax.xaxis.set_minor_locator(ticker.MultipleLocator(1))
