@@ -26,12 +26,13 @@ fittingPeriod = 8       # On how long do we fit the data?
 #yscale = 'linear'
 yscale = 'log'
 
-field = "Confirmed"
+#field = "Confirmed"
 #field = "Deaths"
 #field = "Active"
+field = "DeathRate"
 
-#evolutionType = "cumulative"
-evolutionType = "daily"
+evolutionType = "cumulative"
+#evolutionType = "daily"
 ################ Parameters to define manually ######################
 
 
@@ -59,6 +60,10 @@ def evolution_country(strCountry,dataParam):
         evolD = evolution_single(strCountry,dataParam['Deaths'])
         evolR = evolution_single(strCountry,dataParam['Recovered'])
         evolution = evolC - evolR - evolD
+    elif field=="DeathRate":
+        evolC = evolution_single(strCountry,dataParam['Confirmed'])
+        evolD = evolution_single(strCountry,dataParam['Deaths'])
+        evolution = evolD/evolC*100
 
     if dataParam['EvolutionType'] == "cumulative":
         return evolution[dataParam['FilterDate']]
@@ -167,12 +172,17 @@ def plot_country(strCountry,dataParam,displayParam,fitParam,quarParam,ax):
 
 def setDisplayParam(field,evolutionType,yscale):
     displayParam = {}
+
+    strUnit = "[-]"
     if field=="Confirmed":
         txtField = "confirmed cases"
     elif field=="Deaths":
         txtField = "deaths"
     elif field=="Active":
         txtField = "active cases"
+    elif field=="DeathRate":
+        txtField = "death rate"
+        strUnit = "[%]"
 
     if evolutionType == 'cumulative':
         txtEvol = "Cumulative"
@@ -180,12 +190,12 @@ def setDisplayParam(field,evolutionType,yscale):
         txtEvol = 'Daily'
 
     txtTitle = "%s %s in some Western countries\n (Source: Johns Hopkins University)" %(txtEvol,txtField)
-    txtYaxis = "%s %s [-]" %(txtEvol,txtField)
+    txtYaxis = "%s %s %s" %(txtEvol,txtField,strUnit)
     displayParam['title'] = txtTitle
     displayParam['YaxisLabel'] = txtYaxis
 
     strDateToday = dt.date.today().strftime("%Y%m%d")
-    fname = "../%s_evolCovid19_%s_%s.pdf" %(strDateToday,txtEvol,txtField)
+    fname = "../%s_evolCovid19_%s_%s.png" %(strDateToday,txtEvol,txtField)
     displayParam['FileName'] = fname.replace(" ","_")
     displayParam['YScale'] = yscale
     return displayParam
@@ -221,22 +231,23 @@ displayParam = setDisplayParam(field,evolutionType,yscale)
 fitParam = [fittingPeriod, extrapolPeriod]
 
 close(1)
-fig = figure(1)
+fig = figure(num=1,figsize=(10,6))
 ax = fig.add_subplot(111)
 
-#plot_country("France",dataParam,displayParam,fitParam,'3/17/20',ax)
-plot_country("Germany",dataParam,displayParam,fitParam,'3/19/20',ax)
+#plot_country("China",dataParam,displayParam,fitParam,'1/22/20',ax)
 plot_country("Italy",dataParam,displayParam,fitParam,'3/9/20',ax)
-#plot_country("Spain",dataParam,displayParam,fitParam,'3/14/20',ax)
-plot_country("United Kingdom",dataParam,displayParam,fitParam,'5/22/20',ax)
 plot_country("US",dataParam,displayParam,fitParam,'5/22/20',ax)
+plot_country("Spain",dataParam,displayParam,fitParam,'3/14/20',ax)
+#plot_country("Germany",dataParam,displayParam,fitParam,'3/19/20',ax)
+#plot_country("Iran",dataParam,displayParam,fitParam,'8/17/20',ax)
+plot_country("France",dataParam,displayParam,fitParam,'3/17/20',ax)
+#plot_country("Korea, South",dataParam,displayParam,fitParam,'5/22/20',ax)
+plot_country("Switzerland",dataParam,displayParam,fitParam,'5/22/20',ax)
+#plot_country("United Kingdom",dataParam,displayParam,fitParam,'5/22/20',ax)
 #plot_country("Norway",dataParam,displayParam,fitParam,'5/22/20',ax)
 #plot_country("Sweden",dataParam,displayParam,fitParam,'5/22/20',ax)
 #plot_country("Finland",dataParam,displayParam,fitParam,'5/22/20',ax)
 #plot_country("Canada",dataParam,displayParam,fitParam,'5/22/20',ax)
-#plot_country("Switzerland",dataParam,displayParam,fitParam,'5/22/20',ax)
-#plot_country("China",dataParam,displayParam,fitParam,'1/22/20',ax)
-plot_country("Korea, South",dataParam,displayParam,fitParam,'5/22/20',ax)
 
 ax.set_title(displayParam['title'])
 ax.set_yscale(displayParam['YScale'])
@@ -244,9 +255,10 @@ ax.set_xlabel("Date")
 ax.xaxis.set_major_locator(ticker.MultipleLocator(daysInterval))
 ax.xaxis.set_minor_locator(ticker.MultipleLocator(1))
 ax.set_ylabel(displayParam['YaxisLabel'])
-ax.legend(loc=0)
+ax.legend(loc=2)
 ax.grid(which='major',color='grey', linestyle='-', linewidth=1)
 ax.grid(which='minor',color='grey', linestyle='-', linewidth=0.5)
 
-savefig(displayParam['FileName'])
+fig.tight_layout()
+savefig(displayParam['FileName'],dpi=600,bbox='tight')
 show()
