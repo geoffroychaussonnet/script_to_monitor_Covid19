@@ -19,7 +19,7 @@ import datetime as dt
 # Path to the folder containing the time series:
 path="../csse_covid_19_data/csse_covid_19_time_series/"
 daysInterval = 7   # To set Major x-axis:
-startDate = datetime.date(2020, 1,22)   # Start date of the plot:
+startDate = datetime.date(2020, 2,22)   # Start date of the plot:
 extrapolPeriod = 14     # How many days to extrapolate?
 fittingPeriod = 8       # On how long do we fit the data?
 
@@ -27,14 +27,13 @@ fittingPeriod = 8       # On how long do we fit the data?
 yscale = 'log'
 
 #field = "Confirmed"
-#field = "Deaths"
-field = "Active"
+field = "Deaths"
 #field = "DeathRate"
 
 evolutionType = "cumulative"
 #evolutionType = "daily"
 
-bExtrapol = False
+bExtrapol = True
 ################ Parameters to define manually ######################
 
 
@@ -60,11 +59,6 @@ def evolution_country(strCountry,dataParam):
         evolution = evolution_single(strCountry,dataParam['Confirmed'])
     elif field=="Deaths":
         evolution = evolution_single(strCountry,dataParam['Deaths'])
-    elif field=="Active":
-        evolC = evolution_single(strCountry,dataParam['Confirmed'])
-        evolD = evolution_single(strCountry,dataParam['Deaths'])
-        evolR = evolution_single(strCountry,dataParam['Recovered'])
-        evolution = evolC - evolR - evolD
     elif field=="DeathRate":
         evolC = evolution_single(strCountry,dataParam['Confirmed'])
         evolD = evolution_single(strCountry,dataParam['Deaths'])
@@ -191,8 +185,6 @@ def setDisplayParam(field,evolutionType,yscale):
         txtField = "confirmed cases"
     elif field=="Deaths":
         txtField = "deaths"
-    elif field=="Active":
-        txtField = "active cases"
     elif field=="DeathRate":
         txtField = "death rate"
         strUnit = "[%]"
@@ -215,9 +207,8 @@ def setDisplayParam(field,evolutionType,yscale):
 
 def loadData(path,field,evolutionType,startDate=datetime.date(2020, 1,1)):
     dataParam = {}
-    dataParam['Confirmed'] = pd.read_csv(path+"time_series_19-covid-Confirmed.csv")
-    dataParam['Deaths'] = pd.read_csv(path+"time_series_19-covid-Deaths.csv")
-    dataParam['Recovered'] = pd.read_csv(path+"time_series_19-covid-Recovered.csv")
+    dataParam['Confirmed'] = pd.read_csv(path+"time_series_covid19_confirmed_global.csv")
+    dataParam['Deaths'] = pd.read_csv(path+"time_series_covid19_deaths_global.csv")
     dataParam['Field'] = field
     dataParam['EvolutionType'] = evolutionType
     dateax = dataParam['Confirmed'].columns[4:].values.astype(str)
@@ -241,8 +232,6 @@ def setFitExtraParam(fittingPeriod, extrapolPeriod,dataParam,bExtrapol):
         return [fittingPeriod, 14, bExtrapol]
     elif field=="Deaths":
         return [fittingPeriod, 21, bExtrapol]
-    elif field=="Active":
-        return [fittingPeriod, 21, bExtrapol]
     elif field=="DeathRate":
         return [fittingPeriod, 21, bExtrapol]
 
@@ -256,17 +245,17 @@ close(1)
 fig = figure(num=1,figsize=(10,6))
 ax = fig.add_subplot(111)
 
+#plot_country("World",dataParam,displayParam,fitParam,'3/22/21',ax)
 #plot_country("China",dataParam,displayParam,fitParam,'1/22/20',ax)
 plot_country("Italy",dataParam,displayParam,fitParam,'3/9/20',ax)
 plot_country("US",dataParam,displayParam,fitParam,'5/22/20',ax)
-#plot_country("Spain",dataParam,displayParam,fitParam,'3/14/20',ax)
+plot_country("Spain",dataParam,displayParam,fitParam,'3/14/20',ax)
 plot_country("Germany",dataParam,displayParam,fitParam,'3/19/20',ax)
 #plot_country("Iran",dataParam,displayParam,fitParam,'8/17/20',ax)
-#plot_country("France",dataParam,displayParam,fitParam,'3/17/20',ax)
+plot_country("France",dataParam,displayParam,fitParam,'3/17/20',ax)
 #plot_country("Korea, South",dataParam,displayParam,fitParam,'5/22/20',ax)
-plot_country("Switzerland",dataParam,displayParam,fitParam,'5/22/20',ax)
+#plot_country("Switzerland",dataParam,displayParam,fitParam,'5/22/20',ax)
 plot_country("United Kingdom",dataParam,displayParam,fitParam,'3/22/20',ax)
-plot_country("World",dataParam,displayParam,fitParam,'3/22/21',ax)
 #plot_country("Norway",dataParam,displayParam,fitParam,'5/22/20',ax)
 #plot_country("Sweden",dataParam,displayParam,fitParam,'5/22/20',ax)
 #plot_country("Finland",dataParam,displayParam,fitParam,'5/22/20',ax)
