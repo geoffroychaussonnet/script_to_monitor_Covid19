@@ -26,16 +26,16 @@ fittingPeriod = 8       # On how long do we fit the data?
 #yscale = 'linear'
 yscale = 'log'
 
-#field = "Confirmed"
-field = "Deaths"
+field = "Confirmed"
+#field = "Deaths"
 #field = "DeathRate"
 
-evolutionType = "cumulative"
-#evolutionType = "daily"
+#evolutionType = "cumulative"
+evolutionType = "daily"
 
 bExtrapol = True
+#bExtrapol = False
 ################ Parameters to define manually ######################
-
 
 
 ######################## Definition of Functions ############################
@@ -248,14 +248,14 @@ ax = fig.add_subplot(111)
 #plot_country("World",dataParam,displayParam,fitParam,'3/22/21',ax)
 #plot_country("China",dataParam,displayParam,fitParam,'1/22/20',ax)
 plot_country("Italy",dataParam,displayParam,fitParam,'3/9/20',ax)
-plot_country("US",dataParam,displayParam,fitParam,'5/22/20',ax)
+plot_country("US",dataParam,displayParam,fitParam,'3/22/20',ax)
 plot_country("Spain",dataParam,displayParam,fitParam,'3/14/20',ax)
-#plot_country("Germany",dataParam,displayParam,fitParam,'3/19/20',ax)
+plot_country("Germany",dataParam,displayParam,fitParam,'3/19/20',ax)
 #plot_country("Iran",dataParam,displayParam,fitParam,'8/17/20',ax)
-plot_country("France",dataParam,displayParam,fitParam,'3/17/20',ax)
+#plot_country("France",dataParam,displayParam,fitParam,'3/17/20',ax)
 #plot_country("Korea, South",dataParam,displayParam,fitParam,'5/22/20',ax)
 #plot_country("Switzerland",dataParam,displayParam,fitParam,'5/22/20',ax)
-plot_country("United Kingdom",dataParam,displayParam,fitParam,'3/22/20',ax)
+#plot_country("United Kingdom",dataParam,displayParam,fitParam,'3/22/20',ax)
 #plot_country("Norway",dataParam,displayParam,fitParam,'5/22/20',ax)
 #plot_country("Sweden",dataParam,displayParam,fitParam,'5/22/20',ax)
 #plot_country("Finland",dataParam,displayParam,fitParam,'5/22/20',ax)
