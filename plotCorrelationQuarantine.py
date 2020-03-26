@@ -5,6 +5,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
 import datetime as dt
+from scipy.signal import savgol_filter
 
 ############### Basic use #############################
 # example: plot_country("France",dataParam,fitParam,'3/17/20',ax)
@@ -26,8 +27,8 @@ fittingPeriod = 8       # On how long do we fit the data?
 #yscale = 'linear'
 yscale = 'log'
 
-field = "Confirmed"
-#field = "Deaths"
+#field = "Confirmed"
+field = "Deaths"
 #field = "DeathRate"
 
 #evolutionType = "cumulative"
@@ -35,6 +36,9 @@ evolutionType = "daily"
 
 bExtrapol = True
 #bExtrapol = False
+
+bSmoothing = True
+#bSmoothing = False
 ################ Parameters to define manually ######################
 
 
@@ -65,12 +69,13 @@ def evolution_country(strCountry,dataParam):
         evolution = evolD/evolC*100
 
     if dataParam['EvolutionType'] == "cumulative":
-        return evolution[dataParam['FilterDate']]
+        evol =  evolution[dataParam['FilterDate']]
     elif dataParam['EvolutionType'] == "daily":
         dedt = np.zeros(len(evolution))
         dedt[1:] = (np.roll(evolution,-1) - evolution)[:-1]
-        return dedt[dataParam['FilterDate']]
+        evol = dedt[dataParam['FilterDate']]
 
+    return evol
 
 def get_trend(dates,evol1,fitParam,extParam):
     dtFitBeg = fitParam[0]
@@ -156,6 +161,9 @@ def plot_country(strCountry,dataParam,displayParam,fitParam,quarParam,ax):
     extParam1.append(dtExtBeg)
     extParam1.append(dtExtEnd)
 
+    if dataParam['Smoothing']:
+        evol1 = savgol_filter(evol1, 7, 3) # window size 51, polynomial order 3
+
     if displayParam['YScale'] == 'log':
         evol1 = np.ma.masked_where(evol1<=0,evol1)
     p = ax.semilogy(dataParam['DateAxis'],evol1,ls='-',lw=4.0,label=strCountry)
@@ -205,16 +213,23 @@ def setDisplayParam(field,evolutionType,yscale):
     displayParam['YScale'] = yscale
     return displayParam
 
-def loadData(path,field,evolutionType,startDate=datetime.date(2020, 1,1)):
+def loadData(path,field,evolutionType,bSmoothing,startDate=datetime.date(2020, 1,1)):
     dataParam = {}
     dataParam['Confirmed'] = pd.read_csv(path+"time_series_covid19_confirmed_global.csv")
     dataParam['Deaths'] = pd.read_csv(path+"time_series_covid19_deaths_global.csv")
     dataParam['Field'] = field
     dataParam['EvolutionType'] = evolutionType
-    dateax = dataParam['Confirmed'].columns[4:].values.astype(str)
+    dataParam['Smoothing'] = bSmoothing
+    #dateax = dataParam['Confirmed'].columns[4:].values.astype(str)
+    dateax = dataParam['Deaths'].columns[4:].values.astype(str)
 
     # Convert date axis to date vector
     dates = np.array([dt.datetime.strptime(plof,'%m/%d/%y').date() for plof in dateax])
+    #dates = []
+    #for plof in dateax: 
+    #    print("YOP: ", plof)
+    #    yop = dt.datetime.strptime(plof,'%m/%d/%y').date()
+    #    dates.append(yop)
 
     # Filter axe of dates
     filterDate = (dates>=startDate)
@@ -237,7 +252,7 @@ def setFitExtraParam(fittingPeriod, extrapolPeriod,dataParam,bExtrapol):
 
 ######################## Definition of Functions ############################
 
-dataParam = loadData(path,field,evolutionType,startDate=startDate)
+dataParam = loadData(path,field,evolutionType,bSmoothing,startDate=startDate)
 displayParam = setDisplayParam(field,evolutionType,yscale)
 fitParam = setFitExtraParam(fittingPeriod, extrapolPeriod,dataParam,bExtrapol)
 
@@ -245,14 +260,14 @@ close(1)
 fig = figure(num=1,figsize=(10,6))
 ax = fig.add_subplot(111)
 
-#plot_country("World",dataParam,displayParam,fitParam,'3/22/21',ax)
+plot_country("World",dataParam,displayParam,fitParam,'3/22/21',ax)
 #plot_country("China",dataParam,displayParam,fitParam,'1/22/20',ax)
 plot_country("Italy",dataParam,displayParam,fitParam,'3/9/20',ax)
 plot_country("US",dataParam,displayParam,fitParam,'3/22/20',ax)
 plot_country("Spain",dataParam,displayParam,fitParam,'3/14/20',ax)
 plot_country("Germany",dataParam,displayParam,fitParam,'3/19/20',ax)
 #plot_country("Iran",dataParam,displayParam,fitParam,'8/17/20',ax)
-#plot_country("France",dataParam,displayParam,fitParam,'3/17/20',ax)
+plot_country("France",dataParam,displayParam,fitParam,'3/17/20',ax)
 #plot_country("Korea, South",dataParam,displayParam,fitParam,'5/22/20',ax)
 #plot_country("Switzerland",dataParam,displayParam,fitParam,'5/22/20',ax)
 #plot_country("United Kingdom",dataParam,displayParam,fitParam,'3/22/20',ax)
