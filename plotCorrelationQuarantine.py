@@ -19,7 +19,7 @@ from scipy.signal import savgol_filter
 ################ Parameters to define manually ######################
 # Path to the folder containing the time series:
 path="../csse_covid_19_data/csse_covid_19_time_series/"
-daysInterval = 7   # To set Major x-axis:
+daysInterval = 7   # To set Major x-axis
 startDate = datetime.date(2020, 2,22)   # Start date of the plot:
 extrapolPeriod = 14     # How many days to extrapolate?
 fittingPeriod = 8       # On how long do we fit the data?
@@ -27,18 +27,17 @@ fittingPeriod = 8       # On how long do we fit the data?
 #yscale = 'linear'
 yscale = 'log'
 
-#field = "Confirmed"
-field = "Deaths"
+field = "Confirmed"
+#field = "Deaths"
 #field = "DeathRate"
 
-#evolutionType = "cumulative"
-evolutionType = "daily"
+evolutionType = "cumulative"
+#evolutionType = "daily"
 
-bExtrapol = True
 #bExtrapol = False
+bExtrapol = True
 
-bSmoothing = True
-#bSmoothing = False
+vSmoothing = [0,3]  # [window size,order of fitting polynomial]
 ################ Parameters to define manually ######################
 
 
@@ -161,8 +160,8 @@ def plot_country(strCountry,dataParam,displayParam,fitParam,quarParam,ax):
     extParam1.append(dtExtBeg)
     extParam1.append(dtExtEnd)
 
-    if dataParam['Smoothing']:
-        evol1 = savgol_filter(evol1, 7, 3) # window size 51, polynomial order 3
+    if dataParam['Smoothing'][0] != 0:
+        evol1 = savgol_filter(evol1, dataParam['Smoothing'][0], dataParam['Smoothing'][1]) # arg2: window size; arg3:  polynomial order 
 
     if displayParam['YScale'] == 'log':
         evol1 = np.ma.masked_where(evol1<=0,evol1)
@@ -213,13 +212,13 @@ def setDisplayParam(field,evolutionType,yscale):
     displayParam['YScale'] = yscale
     return displayParam
 
-def loadData(path,field,evolutionType,bSmoothing,startDate=datetime.date(2020, 1,1)):
+def loadData(path,field,evolutionType,vSmoothing,startDate=datetime.date(2020, 1,1)):
     dataParam = {}
     dataParam['Confirmed'] = pd.read_csv(path+"time_series_covid19_confirmed_global.csv")
     dataParam['Deaths'] = pd.read_csv(path+"time_series_covid19_deaths_global.csv")
     dataParam['Field'] = field
     dataParam['EvolutionType'] = evolutionType
-    dataParam['Smoothing'] = bSmoothing
+    dataParam['Smoothing'] = vSmoothing
     #dateax = dataParam['Confirmed'].columns[4:].values.astype(str)
     dateax = dataParam['Deaths'].columns[4:].values.astype(str)
 
@@ -252,7 +251,7 @@ def setFitExtraParam(fittingPeriod, extrapolPeriod,dataParam,bExtrapol):
 
 ######################## Definition of Functions ############################
 
-dataParam = loadData(path,field,evolutionType,bSmoothing,startDate=startDate)
+dataParam = loadData(path,field,evolutionType,vSmoothing,startDate=startDate)
 displayParam = setDisplayParam(field,evolutionType,yscale)
 fitParam = setFitExtraParam(fittingPeriod, extrapolPeriod,dataParam,bExtrapol)
 
@@ -268,13 +267,16 @@ plot_country("Spain",dataParam,displayParam,fitParam,'3/14/20',ax)
 plot_country("Germany",dataParam,displayParam,fitParam,'3/19/20',ax)
 #plot_country("Iran",dataParam,displayParam,fitParam,'8/17/20',ax)
 plot_country("France",dataParam,displayParam,fitParam,'3/17/20',ax)
-#plot_country("Korea, South",dataParam,displayParam,fitParam,'5/22/20',ax)
+plot_country("Korea, South",dataParam,displayParam,fitParam,'5/22/20',ax)
+plot_country("Japan",dataParam,displayParam,fitParam,'5/22/20',ax)
 #plot_country("Switzerland",dataParam,displayParam,fitParam,'5/22/20',ax)
 #plot_country("United Kingdom",dataParam,displayParam,fitParam,'3/22/20',ax)
-#plot_country("Norway",dataParam,displayParam,fitParam,'5/22/20',ax)
+#plot_country("Denmark",dataParam,displayParam,fitParam,'3/13/20',ax)
+#plot_country("Norway",dataParam,displayParam,fitParam,'3/12/20',ax)
 #plot_country("Sweden",dataParam,displayParam,fitParam,'5/22/20',ax)
-#plot_country("Finland",dataParam,displayParam,fitParam,'5/22/20',ax)
+#plot_country("Finland",dataParam,displayParam,fitParam,'3/19/20',ax)
 #plot_country("Canada",dataParam,displayParam,fitParam,'5/22/20',ax)
+#plot_country("Belgium",dataParam,displayParam,fitParam,'3/18/20',ax)
 
 ax.set_title(displayParam['title'])
 ax.set_yscale(displayParam['YScale'])
