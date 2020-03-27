@@ -27,17 +27,17 @@ fittingPeriod = 8       # On how long do we fit the data?
 #yscale = 'linear'
 yscale = 'log'
 
-field = "Confirmed"
-#field = "Deaths"
+#field = "Confirmed"
+field = "Deaths"
+#field = "Active"
 #field = "DeathRate"
 
-evolutionType = "cumulative"
-#evolutionType = "daily"
+#evolutionType = "cumulative"
+evolutionType = "daily"
 
-#bExtrapol = False
-bExtrapol = True
+iExtrapol = 1
 
-vSmoothing = [0,3]  # [window size,order of fitting polynomial]
+vSmoothing = [5,3]  # [window size,order of fitting polynomial]
 ################ Parameters to define manually ######################
 
 
@@ -62,6 +62,11 @@ def evolution_country(strCountry,dataParam):
         evolution = evolution_single(strCountry,dataParam['Confirmed'])
     elif field=="Deaths":
         evolution = evolution_single(strCountry,dataParam['Deaths'])
+    elif field=="Active":
+        evolC = evolution_single(strCountry,dataParam['Confirmed'])
+        evolD = evolution_single(strCountry,dataParam['Deaths'])
+        evolR = evolution_single(strCountry,dataParam['Recovered'])
+        evolution = evolC - evolR - evolD
     elif field=="DeathRate":
         evolC = evolution_single(strCountry,dataParam['Confirmed'])
         evolD = evolution_single(strCountry,dataParam['Deaths'])
@@ -126,7 +131,7 @@ def plot_country(strCountry,dataParam,displayParam,fitParam,quarParam,ax):
     quarDate = quarParam
     fittingPeriod = fitParam[0]
     extrapolPeriod = fitParam[1]
-    bExtrapol = fitParam[2]
+    iExtrapol = fitParam[2]
 
     # Extract evolution for this country
     evol1 = evolution_country(strCountry,dataParam)
@@ -134,9 +139,6 @@ def plot_country(strCountry,dataParam,displayParam,fitParam,quarParam,ax):
     # find the quarantine date 
     iQuar = np.where(dataParam['Dates']>=dateIn(quarDate))
     iQuar = dataParam['Dates']>=dateIn(quarDate)
-    #print("iQuar:", iQuar)
-    #print("quarDAte:", quarDate)
-    #print("dataParam['DateAxis']:", dataParam['DateAxis'])
 
     fitParam1 = []
     extParam1 = []
@@ -172,7 +174,7 @@ def plot_country(strCountry,dataParam,displayParam,fitParam,quarParam,ax):
         # Plot the quarantine date
         ax.scatter(dataParam['DateAxis'][iQuar][0],evol1[iQuar][0],c=col,s=300,marker="X")
 
-    if not(bExtrapol): return
+    if (iExtrapol==0): return
 
     # Get the trend
     xextrapol, yextrapol, strRate = get_trend(dataParam['Dates'],evol1,fitParam1,extParam1)
@@ -192,6 +194,8 @@ def setDisplayParam(field,evolutionType,yscale):
         txtField = "confirmed cases"
     elif field=="Deaths":
         txtField = "deaths"
+    elif field=="Active":
+        txtField = "active cases"
     elif field=="DeathRate":
         txtField = "death rate"
         strUnit = "[%]"
@@ -216,6 +220,7 @@ def loadData(path,field,evolutionType,vSmoothing,startDate=datetime.date(2020, 1
     dataParam = {}
     dataParam['Confirmed'] = pd.read_csv(path+"time_series_covid19_confirmed_global.csv")
     dataParam['Deaths'] = pd.read_csv(path+"time_series_covid19_deaths_global.csv")
+    dataParam['Recovered'] = pd.read_csv(path+"time_series_covid19_recovered_global.csv")
     dataParam['Field'] = field
     dataParam['EvolutionType'] = evolutionType
     dataParam['Smoothing'] = vSmoothing
@@ -224,11 +229,6 @@ def loadData(path,field,evolutionType,vSmoothing,startDate=datetime.date(2020, 1
 
     # Convert date axis to date vector
     dates = np.array([dt.datetime.strptime(plof,'%m/%d/%y').date() for plof in dateax])
-    #dates = []
-    #for plof in dateax: 
-    #    print("YOP: ", plof)
-    #    yop = dt.datetime.strptime(plof,'%m/%d/%y').date()
-    #    dates.append(yop)
 
     # Filter axe of dates
     filterDate = (dates>=startDate)
@@ -241,34 +241,36 @@ def loadData(path,field,evolutionType,vSmoothing,startDate=datetime.date(2020, 1
 
     return dataParam
 
-def setFitExtraParam(fittingPeriod, extrapolPeriod,dataParam,bExtrapol):
+def setFitExtraParam(fittingPeriod, extrapolPeriod,dataParam,iExtrapol):
     if field=="Confirmed":
-        return [fittingPeriod, 14, bExtrapol]
+        return [fittingPeriod, 14, iExtrapol]
     elif field=="Deaths":
-        return [fittingPeriod, 21, bExtrapol]
+        return [fittingPeriod, 21, iExtrapol]
+    elif field=="Active":
+        return [fittingPeriod, 21, iExtrapol]
     elif field=="DeathRate":
-        return [fittingPeriod, 21, bExtrapol]
+        return [fittingPeriod, 21, iExtrapol]
 
 ######################## Definition of Functions ############################
 
 dataParam = loadData(path,field,evolutionType,vSmoothing,startDate=startDate)
 displayParam = setDisplayParam(field,evolutionType,yscale)
-fitParam = setFitExtraParam(fittingPeriod, extrapolPeriod,dataParam,bExtrapol)
+fitParam = setFitExtraParam(fittingPeriod, extrapolPeriod,dataParam,iExtrapol)
 
 close(1)
 fig = figure(num=1,figsize=(10,6))
 ax = fig.add_subplot(111)
 
-plot_country("World",dataParam,displayParam,fitParam,'3/22/21',ax)
-#plot_country("China",dataParam,displayParam,fitParam,'1/22/20',ax)
+#plot_country("World",dataParam,displayParam,fitParam,'3/22/21',ax)
+plot_country("China",dataParam,displayParam,fitParam,'1/22/22',ax)
 plot_country("Italy",dataParam,displayParam,fitParam,'3/9/20',ax)
 plot_country("US",dataParam,displayParam,fitParam,'3/22/20',ax)
 plot_country("Spain",dataParam,displayParam,fitParam,'3/14/20',ax)
 plot_country("Germany",dataParam,displayParam,fitParam,'3/19/20',ax)
 #plot_country("Iran",dataParam,displayParam,fitParam,'8/17/20',ax)
-plot_country("France",dataParam,displayParam,fitParam,'3/17/20',ax)
-plot_country("Korea, South",dataParam,displayParam,fitParam,'5/22/20',ax)
-plot_country("Japan",dataParam,displayParam,fitParam,'5/22/20',ax)
+#plot_country("France",dataParam,displayParam,fitParam,'3/17/20',ax)
+#plot_country("Korea, South",dataParam,displayParam,fitParam,'5/22/20',ax)
+#plot_country("Japan",dataParam,displayParam,fitParam,'5/22/20',ax)
 #plot_country("Switzerland",dataParam,displayParam,fitParam,'5/22/20',ax)
 #plot_country("United Kingdom",dataParam,displayParam,fitParam,'3/22/20',ax)
 #plot_country("Denmark",dataParam,displayParam,fitParam,'3/13/20',ax)
