@@ -20,16 +20,16 @@ from scipy.signal import savgol_filter
 # Path to the folder containing the time series:
 path="../csse_covid_19_data/csse_covid_19_time_series/"
 daysInterval = 7   # To set Major x-axis
-startDate = datetime.date(2020, 3,1)   # Start date of the plot:
+startDate = datetime.date(2020, 2,22)   # Start date of the plot:
 extrapolPeriod = 14     # How many days to extrapolate?
 fittingPeriod = 8       # On how long do we fit the data?
 
 yscale = 'linear'
 #yscale = 'log'
 
-field = "Confirmed"
+#field = "Confirmed"
 #field = "Deaths"
-#field = "Active"
+field = "Active"
 #field = "DeathRate"
 
 #evolutionType = "cumulative"
@@ -40,7 +40,7 @@ evolutionType = "daily"
 
 iExtrapol = 0
 
-vSmoothing = [7,3]  # [window size,order of fitting polynomial]
+vSmoothing = [5,3]  # [window size,order of fitting polynomial]
 ################ Parameters to define manually ######################
 
 
@@ -50,12 +50,6 @@ def evolution_single(strCountry,data):
 
     size=len(data.iloc[0].values[4:])
     evolution = zeros(size,dtype=int)
-
-    lstCountry = [strCountry]
-    if strCountry == "EUW":
-        lstCountry = ["France", "Germany", "Spain", "Italy", "Netherlands", "Portugal", "Belgium", "Sweden", "Finland", "Greece", "Ireland", "United Kingdom", "Norway","Switzerland", "Poland", "Andorra","Luxembourg", "Liechtenstein", "Malta", "San Marino", "Holy See","Monaco"]
-    elif strCountry == "European continent":
-        lstCountry = ["France", "Germany", "Spain", "Italy", "Netherlands", "Portugal", "Belgium", "Sweden", "Finland", "Greece", "Ireland", "United Kingdom", "Norway","Switzerland", "Poland", "Andorra","Luxembourg", "Liechtenstein", "Malta", "San Marino", "Holy See","Monaco","Hungary", "Czechia","Slovakia", "Slovenia", "Croatia","Bosnia and Herzegovina", "Serbia", "Albania", "Romania", "Bulgaria", "Ukraine", "Belarus", "Latvia", "Estonia", "Lithuania","Moldova","North Macedonia", "Kosovo","Montenegro","Iceland","Cyprus"]
 
     for ic,cntry in enumerate(data['Country/Region']):
         if (cntry in lstCountry) or (strCountry=="World"):
@@ -120,8 +114,7 @@ def get_trend(dates,evol1,fitParam,extParam):
     print("Time windows for extrapo: ", dateOut(dtExtBeg), " - ", dateOut(dtExtEnd))
     bfitDate = (dates>=dtFitBeg) * (dates<=dtFitEnd)
     fitDate = dates[bfitDate]
-    #Ndfit = (dtFitEnd - dtFitBeg).days + 1
-    Ndfit = sum(bfitDate)
+    Ndfit = (dtFitEnd - dtFitBeg).days + 1
     Ndext = (dtExtEnd - dtExtBeg).days + 1
     Ndtot = (dtExtEnd - dtFitBeg).days + 1
     xfit = np.arange(Ndfit)
@@ -158,7 +151,7 @@ def dateIn(strDate):
     return datetime.date(year, month,day)
 
 def plot_country(strCountry,dataParam,displayParam,fitParam,quarParam,ax):
-    print("########## Treating country: %12s ###########" %strCountry)
+    print("########## Treating country: ", strCountry, " #############")
     quarDate = quarParam
     fittingPeriod = fitParam[0]
     extrapolPeriod = fitParam[1]
@@ -298,28 +291,8 @@ close(1)
 fig = figure(num=1,figsize=(10,6))
 ax = fig.add_subplot(111)
 
-#plot_country("World",dataParam,displayParam,fitParam,'3/22/21',ax)
-#plot_country("European continent",dataParam,displayParam,fitParam,'3/22/21',ax)
-#plot_country("China",dataParam,displayParam,fitParam,'1/22/22',ax)
-#plot_country("US",dataParam,displayParam,fitParam,'3/22/20',ax)
-plot_country("Italy",dataParam,displayParam,fitParam,'3/9/20',ax)
-plot_country("Spain",dataParam,displayParam,fitParam,'3/14/20',ax)
-plot_country("Germany",dataParam,displayParam,fitParam,'3/19/20',ax)
-plot_country("France",dataParam,displayParam,fitParam,'3/17/20',ax)
-#plot_country("Iran",dataParam,displayParam,fitParam,'8/17/20',ax)
-#plot_country("Korea, South",dataParam,displayParam,fitParam,'5/22/20',ax)
-#plot_country("Japan",dataParam,displayParam,fitParam,'5/22/20',ax)
-plot_country("Switzerland",dataParam,displayParam,fitParam,'5/22/20',ax)
-plot_country("United Kingdom",dataParam,displayParam,fitParam,'3/22/20',ax)
-#plot_country("Denmark",dataParam,displayParam,fitParam,'3/13/20',ax)
-#plot_country("Norway",dataParam,displayParam,fitParam,'3/12/20',ax)
-#plot_country("Sweden",dataParam,displayParam,fitParam,'3/28/20',ax)
-#plot_country("Finland",dataParam,displayParam,fitParam,'3/19/20',ax)
-#plot_country("Canada",dataParam,displayParam,fitParam,'5/22/20',ax)
-#plot_country("Belgium",dataParam,displayParam,fitParam,'3/18/20',ax)
-#plot_country("Ireland",dataParam,displayParam,fitParam,'3/28/20',ax)
 
-if dataParam['EvolutionType'] == "R0": ax.axhline(1)
+
 ax.set_title(displayParam['title'])
 ax.set_yscale(displayParam['YScale'])
 ax.set_xlabel("Date")
