@@ -20,27 +20,27 @@ from scipy.signal import savgol_filter
 # Path to the folder containing the time series:
 path="../csse_covid_19_data/csse_covid_19_time_series/"
 daysInterval = 7   # To set Major x-axis
-startDate = datetime.date(2020, 3,1)   # Start date of the plot:
+startDate = datetime.date(2020, 2,1)   # Start date of the plot:
 extrapolPeriod = 14     # How many days to extrapolate?
 fittingPeriod = 8       # On how long do we fit the data?
 
-yscale = 'linear'
-#yscale = 'log'
+#yscale = 'linear'
+yscale = 'log'
 
 field = "Confirmed"
 #field = "Deaths"
 #field = "Active"
 #field = "DeathRate"
 
-#evolutionType = "cumulative"
-evolutionType = "daily"
+evolutionType = "cumulative"
+#evolutionType = "daily"
 #evolutionType = "curvature"
 #evolutionType = "smoothedCurvature"
 #evolutionType = "R0"
 
 iExtrapol = 0
 
-vSmoothing = [7,3]  # [window size,order of fitting polynomial]
+vSmoothing = [0,3]  # [window size,order of fitting polynomial]
 ################ Parameters to define manually ######################
 
 
@@ -54,6 +54,8 @@ def evolution_single(strCountry,data):
     lstCountry = [strCountry]
     if strCountry == "EUW":
         lstCountry = ["France", "Germany", "Spain", "Italy", "Netherlands", "Portugal", "Belgium", "Sweden", "Finland", "Greece", "Ireland", "United Kingdom", "Norway","Switzerland", "Poland", "Andorra","Luxembourg", "Liechtenstein", "Malta", "San Marino", "Holy See","Monaco"]
+    elif strCountry == "EU":
+        lstCountry = ["France", "Germany", "Spain", "Italy", "Netherlands", "Portugal", "Belgium", "Sweden", "Finland", "Greece", "Ireland", "Poland", "Luxembourg", "Malta","Slovenia", "Austria", "Croatia", "Hungary", "Czechia", "Slovakia", "Hungary", "Romania", "Bulgaria", "Cyprus", "Lithuania","Latvia","Estonia"]
     elif strCountry == "European continent":
         lstCountry = ["France", "Germany", "Spain", "Italy", "Netherlands", "Portugal", "Belgium", "Sweden", "Finland", "Greece", "Ireland", "United Kingdom", "Norway","Switzerland", "Poland", "Andorra","Luxembourg", "Liechtenstein", "Malta", "San Marino", "Holy See","Monaco","Hungary", "Czechia","Slovakia", "Slovenia", "Croatia","Bosnia and Herzegovina", "Serbia", "Albania", "Romania", "Bulgaria", "Ukraine", "Belarus", "Latvia", "Estonia", "Lithuania","Moldova","North Macedonia", "Kosovo","Montenegro","Iceland","Cyprus"]
 
@@ -298,26 +300,33 @@ close(1)
 fig = figure(num=1,figsize=(10,6))
 ax = fig.add_subplot(111)
 
+i=0
+
 #plot_country("World",dataParam,displayParam,fitParam,'3/22/21',ax)
-#plot_country("European continent",dataParam,displayParam,fitParam,'3/22/21',ax)
-#plot_country("China",dataParam,displayParam,fitParam,'1/22/22',ax)
-#plot_country("US",dataParam,displayParam,fitParam,'3/22/20',ax)
-plot_country("Italy",dataParam,displayParam,fitParam,'3/9/20',ax)
-plot_country("Spain",dataParam,displayParam,fitParam,'3/14/20',ax)
-plot_country("Germany",dataParam,displayParam,fitParam,'3/19/20',ax)
-plot_country("France",dataParam,displayParam,fitParam,'3/17/20',ax)
-#plot_country("Iran",dataParam,displayParam,fitParam,'8/17/20',ax)
-#plot_country("Korea, South",dataParam,displayParam,fitParam,'5/22/20',ax)
-#plot_country("Japan",dataParam,displayParam,fitParam,'5/22/20',ax)
-plot_country("Switzerland",dataParam,displayParam,fitParam,'5/22/20',ax)
-plot_country("United Kingdom",dataParam,displayParam,fitParam,'3/22/20',ax)
-#plot_country("Denmark",dataParam,displayParam,fitParam,'3/13/20',ax)
-#plot_country("Norway",dataParam,displayParam,fitParam,'3/12/20',ax)
-#plot_country("Sweden",dataParam,displayParam,fitParam,'3/28/20',ax)
-#plot_country("Finland",dataParam,displayParam,fitParam,'3/19/20',ax)
-#plot_country("Canada",dataParam,displayParam,fitParam,'5/22/20',ax)
-#plot_country("Belgium",dataParam,displayParam,fitParam,'3/18/20',ax)
-#plot_country("Ireland",dataParam,displayParam,fitParam,'3/28/20',ax)
+if i==0:
+    plot_country("EU",dataParam,displayParam,fitParam,'3/22/21',ax)
+    #plot_country("European continent",dataParam,displayParam,fitParam,'3/22/21',ax)
+    plot_country("China",dataParam,displayParam,fitParam,'1/22/22',ax)
+    plot_country("US",dataParam,displayParam,fitParam,'3/22/20',ax)
+elif i==1:
+    plot_country("China",dataParam,displayParam,fitParam,'1/22/22',ax)
+    plot_country("US",dataParam,displayParam,fitParam,'3/22/20',ax)
+    plot_country("Italy",dataParam,displayParam,fitParam,'3/9/20',ax)
+    plot_country("Spain",dataParam,displayParam,fitParam,'3/14/20',ax)
+    plot_country("Germany",dataParam,displayParam,fitParam,'3/19/20',ax)
+    plot_country("France",dataParam,displayParam,fitParam,'3/17/20',ax)
+    #plot_country("Iran",dataParam,displayParam,fitParam,'8/17/20',ax)
+    #plot_country("Korea, South",dataParam,displayParam,fitParam,'5/22/20',ax)
+    #plot_country("Japan",dataParam,displayParam,fitParam,'5/22/20',ax)
+    #plot_country("Switzerland",dataParam,displayParam,fitParam,'5/22/20',ax)
+    plot_country("United Kingdom",dataParam,displayParam,fitParam,'3/22/20',ax)
+    #plot_country("Denmark",dataParam,displayParam,fitParam,'3/13/20',ax)
+    #plot_country("Norway",dataParam,displayParam,fitParam,'3/12/20',ax)
+    #plot_country("Sweden",dataParam,displayParam,fitParam,'3/28/20',ax)
+    #plot_country("Finland",dataParam,displayParam,fitParam,'3/19/20',ax)
+    #plot_country("Canada",dataParam,displayParam,fitParam,'5/22/20',ax)
+    #plot_country("Belgium",dataParam,displayParam,fitParam,'3/18/20',ax)
+    #plot_country("Ireland",dataParam,displayParam,fitParam,'3/28/20',ax)
 
 if dataParam['EvolutionType'] == "R0": ax.axhline(1)
 ax.set_title(displayParam['title'])
