@@ -13,7 +13,7 @@ The two main scripts are:
 1/ plotCorrelation.py (see Fig. 1)  
 -> Plot the usual observables (confirmed cases, deaths, active cases) versus time. The observables can be show in the form of cumulated, daily value (gradient) or daily value variation (curvature)  
 -> Curves can be smoothed with the Savitzky-Golay filter  
--> Exponential extrapolation is proposed based on data before and after lockdown, if lockdown date is given.
+-> Exponential extrapolation is proposed based on data before (dashed line) and after (plain line) lockdown, if lockdown date is given.
 
 
 ![Fig. 1: Example of curve produced by plotCorrelation.py](20200402_evolCovid19_Daily_deaths_for_countries.png)
