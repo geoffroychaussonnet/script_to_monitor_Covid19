@@ -1,4 +1,6 @@
-# Author: Geoffroy Chaussonnet
+# Author: Geoffroy Chaussonnet, Karlsruhe Institute of Technology, Germany
+# Script to load the data related to the COVID-19 gathered by the Johns Hopkins University and to plot the evolution per country, versus time. Observables are confirmed cases, deaths, active cases or death rate. The observables can be cumulative, or daily (first time derivative), or even the curvature (very noisy curve)
+# Source of the data: https://github.com/CSSEGISandData/COVID-19
 
 from pylab import *
 import pandas as pd
@@ -8,43 +10,51 @@ import datetime as dt
 from scipy.signal import savgol_filter
 
 ############### Basic use #############################
-# example: plot_country("France",dataParam,fitParam,'3/17/20',ax)
-# Argument 1: string, as it appears in the CSV file
+# example: plot_country("US",dataParam,displayParam,fitParam,'3/22/20',ax)
+# Argument 1: name of the country, as it appears in the CSV file
 # Argument 2: data parameters, AUTOMATICALLY generated
-# Argument 3: fitting parameters, AUTOMATICALLY generated
-# Argument 4: date of the confinement start. If no confinement, enter a date in the future
-# Argument 5: axis (matplotlib object) where to plot the curves
+# Argument 3: display parameters, AUTOMATICALLY generated
+# Argument 4: fitting parameters, AUTOMATICALLY generated
+# Argument 5: date of the confinement start. If no confinement, enter a date in the future
+# Argument 6: axis (matplotlib object) where to plot the curves
 
-
-################ Parameters to define manually ######################
+################ Parameters to define manually (BEGIN) ######################
 # Path to the folder containing the time series:
 path="../csse_covid_19_data/csse_covid_19_time_series/"
 daysInterval = 7   # To set Major x-axis
-startDate = datetime.date(2020, 2,1)   # Start date of the plot:
+startDate = datetime.date(2020, 3,1)   # Start date of the plot:
 extrapolPeriod = 14     # How many days to extrapolate?
 fittingPeriod = 8       # On how long do we fit the data?
 
 #yscale = 'linear'
 yscale = 'log'
 
-#field = "Confirmed"
-field = "Deaths"
+# Type of value to analyse:
+field = "Confirmed"
+#field = "Deaths"
 #field = "Active"
 #field = "DeathRate"
 
-evolutionType = "cumulative"
-#evolutionType = "daily"
+# Type of evolution:
+#evolutionType = "cumulative"
+evolutionType = "daily"
 #evolutionType = "curvature"
 #evolutionType = "smoothedCurvature"
-#evolutionType = "R0"
+#evolutionType = "R0"  # (Experimental)
 
-iExtrapol = 0
+# Extrapolate data before and after lockdown (0=no, 1=yes) 
+iExtrapol = 1
 
-vSmoothing = [0,3]  # [window size,order of fitting polynomial]
-################ Parameters to define manually ######################
+# Smoothing: (set window size to 0 to deactivate)
+vSmoothing = [7,3]  # [window size,order of fitting polynomial]
+
+# Type of zones (see in the execution section)
+#zone = "continents"
+zone = "countries"
+################ Parameters to define manually (END) ######################
 
 
-######################## Definition of Functions ############################
+######################## Definition of Functions (BEGIN) ############################
 
 def evolution_single(strCountry,data):
 
@@ -52,9 +62,7 @@ def evolution_single(strCountry,data):
     evolution = zeros(size,dtype=int)
 
     lstCountry = [strCountry]
-    if strCountry == "EUW":
-        lstCountry = ["France", "Germany", "Spain", "Italy", "Netherlands", "Portugal", "Belgium", "Sweden", "Finland", "Greece", "Ireland", "United Kingdom", "Norway","Switzerland", "Poland", "Andorra","Luxembourg", "Liechtenstein", "Malta", "San Marino", "Holy See","Monaco"]
-    elif strCountry == "EU":
+    if strCountry == "EU":
         lstCountry = ["France", "Germany", "Spain", "Italy", "Netherlands", "Portugal", "Belgium", "Sweden", "Finland", "Greece", "Ireland", "Poland", "Luxembourg", "Malta","Slovenia", "Austria", "Croatia", "Hungary", "Czechia", "Slovakia", "Hungary", "Romania", "Bulgaria", "Cyprus", "Lithuania","Latvia","Estonia"]
     elif strCountry == "European continent":
         lstCountry = ["France", "Germany", "Spain", "Italy", "Netherlands", "Portugal", "Belgium", "Sweden", "Finland", "Greece", "Ireland", "United Kingdom", "Norway","Switzerland", "Poland", "Andorra","Luxembourg", "Liechtenstein", "Malta", "San Marino", "Holy See","Monaco","Hungary", "Czechia","Slovakia", "Slovenia", "Croatia","Bosnia and Herzegovina", "Serbia", "Albania", "Romania", "Bulgaria", "Ukraine", "Belarus", "Latvia", "Estonia", "Lithuania","Moldova","North Macedonia", "Kosovo","Montenegro","Iceland","Cyprus"]
@@ -94,8 +102,6 @@ def evolution_country(strCountry,dataParam):
         d2edt2[2:] = np.diff(evolution,2)
         evol = d2edt2[dataParam['FilterDate']]
     elif dataParam['EvolutionType'] == "smoothedCurvature":
-        #dedt = np.zeros(len(evolution))
-        #dedt[1:] = np.diff(evolution)
         dedt = np.diff(evolution)
         evol = savgol_filter(dedt, dataParam['Smoothing'][0], dataParam['Smoothing'][1]) # arg2: window size; arg3:  polynomial order 
         d2edt2 = np.zeros(len(evolution))
@@ -106,9 +112,6 @@ def evolution_country(strCountry,dataParam):
         delta0 = np.diff(evolution)
         delta = savgol_filter(delta0, dataParam['Smoothing'][0], dataParam['Smoothing'][1]) # arg2: window size; arg3:  polynomial order 
         R0[1:] = delta/np.roll(delta,5)
-        ## TEST:
-        #print((delta/np.roll(delta,5))[-10:])
-        #print((delta*5/np.roll(delta,1))[-10:])
         evol = R0[dataParam['FilterDate']]
 
     return evol
@@ -122,7 +125,6 @@ def get_trend(dates,evol1,fitParam,extParam):
     print("Time windows for extrapo: ", dateOut(dtExtBeg), " - ", dateOut(dtExtEnd))
     bfitDate = (dates>=dtFitBeg) * (dates<=dtFitEnd)
     fitDate = dates[bfitDate]
-    #Ndfit = (dtFitEnd - dtFitBeg).days + 1
     Ndfit = sum(bfitDate)
     Ndext = (dtExtEnd - dtExtBeg).days + 1
     Ndtot = (dtExtEnd - dtFitBeg).days + 1
@@ -219,7 +221,7 @@ def plot_country(strCountry,dataParam,displayParam,fitParam,quarParam,ax):
         ax.semilogy(xextrapol,yextrapol,ls='-',lw=2.0,c=col)
         ax.annotate(strRate, xy=(xextrapol[-1],yextrapol[-1]), xytext=(3, 3), textcoords="offset points", ha='center', va='bottom',color=col,weight='bold')
 
-def setDisplayParam(field,evolutionType,yscale):
+def setDisplayParam(field,evolutionType,yscale,zone):
     displayParam = {}
 
     strUnit = "[-]"
@@ -244,13 +246,13 @@ def setDisplayParam(field,evolutionType,yscale):
     elif evolutionType == 'R0':
         txtEvol = 'R0 from'
 
-    txtTitle = "%s %s in some Western countries\n (Source: Johns Hopkins University)" %(txtEvol,txtField)
+    txtTitle = "%s %s\n (Source: Johns Hopkins University)" %(txtEvol,txtField)
     txtYaxis = "%s %s %s" %(txtEvol,txtField,strUnit)
     displayParam['title'] = txtTitle
     displayParam['YaxisLabel'] = txtYaxis
 
     strDateToday = dt.date.today().strftime("%Y%m%d")
-    fname = "../FIGURES/%s_evolCovid19_%s_%s.png" %(strDateToday,txtEvol,txtField)
+    fname = "../FIGURES/%s_evolCovid19_%s_%s_for_%s.png" %(strDateToday,txtEvol,txtField,zone)
     displayParam['FileName'] = fname.replace(" ","_")
     displayParam['YScale'] = yscale
     return displayParam
@@ -263,7 +265,6 @@ def loadData(path,field,evolutionType,vSmoothing,startDate=datetime.date(2020, 1
     dataParam['Field'] = field
     dataParam['EvolutionType'] = evolutionType
     dataParam['Smoothing'] = vSmoothing
-    #dateax = dataParam['Confirmed'].columns[4:].values.astype(str)
     dateax = dataParam['Deaths'].columns[4:].values.astype(str)
 
     # Convert date axis to date vector
@@ -290,26 +291,29 @@ def setFitExtraParam(fittingPeriod, extrapolPeriod,dataParam,iExtrapol):
     elif field=="DeathRate":
         return [fittingPeriod, 21, iExtrapol]
 
-######################## Definition of Functions ############################
+######################## Definition of Functions (END) ############################
 
+
+############## Execution section ################
+
+# Initialisation
 dataParam = loadData(path,field,evolutionType,vSmoothing,startDate=startDate)
-displayParam = setDisplayParam(field,evolutionType,yscale)
+displayParam = setDisplayParam(field,evolutionType,yscale,zone)
 fitParam = setFitExtraParam(fittingPeriod, extrapolPeriod,dataParam,iExtrapol)
 
+# Set graphic objects
 close(1)
 fig = figure(num=1,figsize=(10,6))
 ax = fig.add_subplot(111)
 
-i=0
-
 #plot_country("World",dataParam,displayParam,fitParam,'3/22/21',ax)
-if i==0:
+if zone == "continents":
     plot_country("EU",dataParam,displayParam,fitParam,'3/22/21',ax)
     #plot_country("European continent",dataParam,displayParam,fitParam,'3/22/21',ax)
     plot_country("China",dataParam,displayParam,fitParam,'1/22/22',ax)
     plot_country("US",dataParam,displayParam,fitParam,'3/22/20',ax)
-elif i==1:
-    plot_country("China",dataParam,displayParam,fitParam,'1/22/22',ax)
+elif zone == "countries":
+    #plot_country("China",dataParam,displayParam,fitParam,'1/22/22',ax)
     plot_country("US",dataParam,displayParam,fitParam,'3/22/20',ax)
     plot_country("Italy",dataParam,displayParam,fitParam,'3/9/20',ax)
     plot_country("Spain",dataParam,displayParam,fitParam,'3/14/20',ax)
@@ -319,7 +323,7 @@ elif i==1:
     #plot_country("Korea, South",dataParam,displayParam,fitParam,'5/22/20',ax)
     #plot_country("Japan",dataParam,displayParam,fitParam,'5/22/20',ax)
     #plot_country("Switzerland",dataParam,displayParam,fitParam,'5/22/20',ax)
-    plot_country("United Kingdom",dataParam,displayParam,fitParam,'3/22/20',ax)
+    #plot_country("United Kingdom",dataParam,displayParam,fitParam,'3/22/20',ax)
     #plot_country("Denmark",dataParam,displayParam,fitParam,'3/13/20',ax)
     #plot_country("Norway",dataParam,displayParam,fitParam,'3/12/20',ax)
     #plot_country("Sweden",dataParam,displayParam,fitParam,'3/28/20',ax)
@@ -328,6 +332,7 @@ elif i==1:
     #plot_country("Belgium",dataParam,displayParam,fitParam,'3/18/20',ax)
     #plot_country("Ireland",dataParam,displayParam,fitParam,'3/28/20',ax)
 
+# Add graph decorations
 if dataParam['EvolutionType'] == "R0": ax.axhline(1)
 ax.set_title(displayParam['title'])
 ax.set_yscale(displayParam['YScale'])
