@@ -26,5 +26,5 @@ The two main scripts are:
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md) file for details
+This project is licensed under the BSD 3 License - see the [LICENSE.md](LICENSE.md) file for details
 
