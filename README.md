@@ -5,7 +5,8 @@ Scripts to monitor the evolution of COVID-19 propagation for each countries, bas
 
 
 ### Prerequisites
-Scripts were developped with Python 3.6.8, matplotlib 2.2.2, pandas 0.25.3 and scipy 1.2.0
+Scripts were developped with Python 3.6.8, matplotlib 2.2.2, pandas 0.25.3 and scipy 1.2.0.
+The data file from Johns Hopkins University must be installed locally.
 
 ### Getting Started
 The two main scripts are:
