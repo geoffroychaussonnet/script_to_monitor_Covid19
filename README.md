@@ -11,8 +11,8 @@ The data file from Johns Hopkins University must be installed locally.
 The two main scripts are:
 
 1/ plotCorrelation.py (see Fig. 1)
--> Plot the usual observables (confirmed cases, deaths, active cases) versus time. The observables can be show in the form of cumulated, daily value (gradient) or daily value variation (curvature)
--> Curves can be smoothed with the Savitzky-Golay filter
+-> Plot the usual observables (confirmed cases, deaths, active cases) versus time. The observables can be show in the form of cumulated, daily value (gradient) or daily value variation (curvature)  
+-> Curves can be smoothed with the Savitzky-Golay filter  
 -> Exponential extrapolation is proposed based on data before and after lockdown, if lockdown date is given.
 
 
