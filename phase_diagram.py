@@ -20,15 +20,15 @@ from scipy.signal import savgol_filter
 # Path to the folder containing the time series:
 path="../csse_covid_19_data/csse_covid_19_time_series/"
 daysInterval = 7   # To set Major x-axis
-startDate = datetime.date(2020, 2,1)   # Start date of the plot:
+startDate = datetime.date(2020, 1,1)   # Start date of the plot:
 extrapolPeriod = 14     # How many days to extrapolate?
 fittingPeriod = 8       # On how long do we fit the data?
 
-#yscale = 'linear'
-yscale = 'log'
+yscale = 'linear'
+#yscale = 'log'
 
-#field = "Confirmed"
-field = "Deaths"
+field = "Confirmed"
+#field = "Deaths"
 #field = "Active"
 #field = "DeathRate"
 
@@ -40,7 +40,11 @@ evolutionType = "cumulative"
 
 iExtrapol = 0
 
-vSmoothing = [0,3]  # [window size,order of fitting polynomial]
+vSmoothing = [9,3]  # [window size,order of fitting polynomial]
+
+zone = "continents"
+#zone = "countries"
+
 ################ Parameters to define manually ######################
 
 
@@ -99,7 +103,7 @@ def evolution_country(strCountry,dataParam):
         dedt = np.diff(evolution)
         evol = savgol_filter(dedt, dataParam['Smoothing'][0], dataParam['Smoothing'][1]) # arg2: window size; arg3:  polynomial order 
         d2edt2 = np.zeros(len(evolution))
-        d2edt2[2:] = np.diff(evol)/evol[-1]
+        d2edt2[2:] = np.diff(evol)#/evol[-1]
         evol = d2edt2[dataParam['FilterDate']]
     elif dataParam['EvolutionType'] == "R0":
         R0 = np.zeros(len(evolution))
@@ -159,7 +163,7 @@ def dateIn(strDate):
     year = int("20%s" %spl[2])
     return datetime.date(year, month,day)
 
-def plot_country(strCountry,dataParam,displayParam,fitParam,quarParam,ax):
+def plot_phase_country(strCountry,dataParam,displayParam,fitParam,quarParam,ax):
     print("########## Treating country: %12s ###########" %strCountry)
     quarDate = quarParam
     fittingPeriod = fitParam[0]
@@ -167,59 +171,42 @@ def plot_country(strCountry,dataParam,displayParam,fitParam,quarParam,ax):
     iExtrapol = fitParam[2]
 
     # Extract evolution for this country
-    evol1 = evolution_country(strCountry,dataParam)
+    dataParam['EvolutionType'] = "smoothedCurvature"
+    curvature = evolution_country(strCountry,dataParam)
+    dataParam['EvolutionType'] = "daily"
+    gradient = evolution_country(strCountry,dataParam)
+
+    # Filter data for more than 100 cases
+    dataParam['EvolutionType'] = "cumulative"
+    cumul = evolution_country(strCountry,dataParam)
+
+    gooddata = (cumul>100)
+    cumul = cumul[gooddata]
+    gradient = gradient[gooddata]
+    curvature = curvature[gooddata]
+    locDates = dataParam['Dates'][gooddata]
+    
 
     # find the quarantine date 
-    iQuar = np.where(dataParam['Dates']>=dateIn(quarDate))
-    iQuar = dataParam['Dates']>=dateIn(quarDate)
+    iQuar = locDates>=dateIn(quarDate)
 
-    fitParam1 = []
-    extParam1 = []
-    # Define the period for the trend
-    if sum(iQuar) > 3: # Quarantine found
-        dtFitEnd = dateIn(quarDate)
-
-        fitParam2 = []
-        extParam2 = []
-        fitParam2.append(dateIn(quarDate))
-        fitParam2.append(dt.date.today() - dt.timedelta(days=1))
-        extParam2.append(dtFitEnd)
-        extParam2.append(dtFitEnd + dt.timedelta(days=extrapolPeriod+1))
-    else:
-        dtFitEnd = dt.date.today() - dt.timedelta(days=1)
-    dtFitBeg = dtFitEnd - dt.timedelta(days=fittingPeriod+1)
-    dtExtBeg = dtFitEnd
-    dtExtEnd = dtExtBeg + dt.timedelta(days=extrapolPeriod+1)
-    fitParam1.append(dtFitBeg)
-    fitParam1.append(dtFitEnd)
-    extParam1.append(dtExtBeg)
-    extParam1.append(dtExtEnd)
-
+    scurv = curvature
+    sgrad = gradient
     if dataParam['Smoothing'][0] != 0:
-        evol1 = savgol_filter(evol1, dataParam['Smoothing'][0], dataParam['Smoothing'][1]) # arg2: window size; arg3:  polynomial order 
+        scurv = savgol_filter(curvature, dataParam['Smoothing'][0], dataParam['Smoothing'][1]) # arg2: window size; arg3:  polynomial order 
+        sgrad = savgol_filter(gradient, dataParam['Smoothing'][0], dataParam['Smoothing'][1]) # arg2: window size; arg3:  polynomial order 
 
     if displayParam['YScale'] == 'log':
-        evol1 = np.ma.masked_where(evol1<=0,evol1)
-    p = ax.semilogy(dataParam['DateAxis'],evol1,ls='-',lw=4.0,label=strCountry)
+        scurv = np.ma.masked_where(scurv<=0,scurv)
+    p = ax.semilogy(sgrad,scurv,ls='-',marker='o',lw=4.0,label=strCountry)
     col = p[0].get_color()
+    ax.scatter(sgrad[-1],scurv[-1],c=col,s=100,marker="s")
 
     if sum(iQuar) > 0: # Quarantine found
         # Plot the quarantine date
-        ax.scatter(dataParam['DateAxis'][iQuar][0],evol1[iQuar][0],c=col,s=300,marker="X")
+        ax.scatter(sgrad[iQuar][0],scurv[iQuar][0],c=col,s=300,marker="X")
 
-    if (iExtrapol==0): return
-
-    # Get the trend
-    xextrapol, yextrapol, strRate = get_trend(dataParam['Dates'],evol1,fitParam1,extParam1)
-    ax.semilogy(xextrapol,yextrapol,ls='--',lw=2.0,c=col)
-    ax.annotate(strRate, xy=(xextrapol[-1],yextrapol[-1]), xytext=(3, 3), textcoords="offset points", ha='center', va='bottom',color=col,weight='bold')
-
-    if sum(iQuar) > 3: # Quarantine found
-        xextrapol, yextrapol, strRate = get_trend(dataParam['Dates'],evol1,fitParam2,extParam2)
-        ax.semilogy(xextrapol,yextrapol,ls='-',lw=2.0,c=col)
-        ax.annotate(strRate, xy=(xextrapol[-1],yextrapol[-1]), xytext=(3, 3), textcoords="offset points", ha='center', va='bottom',color=col,weight='bold')
-
-def setDisplayParam(field,evolutionType,yscale):
+def setDisplayParam(field,evolutionType,yscale,zone):
     displayParam = {}
 
     strUnit = "[-]"
@@ -233,24 +220,26 @@ def setDisplayParam(field,evolutionType,yscale):
         txtField = "death rate"
         strUnit = "[%]"
 
-    if evolutionType == 'cumulative':
-        txtEvol = "Cumulative"
-    elif evolutionType == 'daily':
-        txtEvol = 'Daily'
-    elif evolutionType == 'curvature':
-        txtEvol = 'Derivative of daily'
-    elif evolutionType == 'smoothedCurvature':
-        txtEvol = 'Derivative of smoothed daily'
-    elif evolutionType == 'R0':
-        txtEvol = 'R0 from'
+    txtEvol = "Phase portrait from"
 
-    txtTitle = "%s %s in some Western countries\n (Source: Johns Hopkins University)" %(txtEvol,txtField)
+#    if evolutionType == 'cumulative':
+#        txtEvol = "Cumulative"
+#    elif evolutionType == 'daily':
+#        txtEvol = 'Daily'
+#    elif evolutionType == 'curvature':
+#        txtEvol = 'Derivative of daily'
+#    elif evolutionType == 'smoothedCurvature':
+#        txtEvol = 'Derivative of smoothed daily'
+#    elif evolutionType == 'R0':
+#        txtEvol = 'R0 from'
+
+    txtTitle = "%s %s\n (Source: Johns Hopkins University)" %(txtEvol,txtField)
     txtYaxis = "%s %s %s" %(txtEvol,txtField,strUnit)
     displayParam['title'] = txtTitle
     displayParam['YaxisLabel'] = txtYaxis
 
     strDateToday = dt.date.today().strftime("%Y%m%d")
-    fname = "../FIGURES/%s_evolCovid19_%s_%s.png" %(strDateToday,txtEvol,txtField)
+    fname = "../FIGURES/%s_evolCovid19_%s_%s_for_%s.png" %(strDateToday,txtEvol,txtField,zone)
     displayParam['FileName'] = fname.replace(" ","_")
     displayParam['YScale'] = yscale
     return displayParam
@@ -293,7 +282,7 @@ def setFitExtraParam(fittingPeriod, extrapolPeriod,dataParam,iExtrapol):
 ######################## Definition of Functions ############################
 
 dataParam = loadData(path,field,evolutionType,vSmoothing,startDate=startDate)
-displayParam = setDisplayParam(field,evolutionType,yscale)
+displayParam = setDisplayParam(field,evolutionType,yscale,zone)
 fitParam = setFitExtraParam(fittingPeriod, extrapolPeriod,dataParam,iExtrapol)
 
 close(1)
@@ -303,38 +292,39 @@ ax = fig.add_subplot(111)
 i=0
 
 #plot_country("World",dataParam,displayParam,fitParam,'3/22/21',ax)
-if i==0:
-    plot_country("EU",dataParam,displayParam,fitParam,'3/22/21',ax)
-    #plot_country("European continent",dataParam,displayParam,fitParam,'3/22/21',ax)
-    plot_country("China",dataParam,displayParam,fitParam,'1/22/22',ax)
-    plot_country("US",dataParam,displayParam,fitParam,'3/22/20',ax)
-elif i==1:
-    plot_country("China",dataParam,displayParam,fitParam,'1/22/22',ax)
-    plot_country("US",dataParam,displayParam,fitParam,'3/22/20',ax)
-    plot_country("Italy",dataParam,displayParam,fitParam,'3/9/20',ax)
-    plot_country("Spain",dataParam,displayParam,fitParam,'3/14/20',ax)
-    plot_country("Germany",dataParam,displayParam,fitParam,'3/19/20',ax)
-    plot_country("France",dataParam,displayParam,fitParam,'3/17/20',ax)
-    #plot_country("Iran",dataParam,displayParam,fitParam,'8/17/20',ax)
-    #plot_country("Korea, South",dataParam,displayParam,fitParam,'5/22/20',ax)
-    #plot_country("Japan",dataParam,displayParam,fitParam,'5/22/20',ax)
-    #plot_country("Switzerland",dataParam,displayParam,fitParam,'5/22/20',ax)
-    plot_country("United Kingdom",dataParam,displayParam,fitParam,'3/22/20',ax)
-    #plot_country("Denmark",dataParam,displayParam,fitParam,'3/13/20',ax)
-    #plot_country("Norway",dataParam,displayParam,fitParam,'3/12/20',ax)
-    #plot_country("Sweden",dataParam,displayParam,fitParam,'3/28/20',ax)
-    #plot_country("Finland",dataParam,displayParam,fitParam,'3/19/20',ax)
-    #plot_country("Canada",dataParam,displayParam,fitParam,'5/22/20',ax)
-    #plot_country("Belgium",dataParam,displayParam,fitParam,'3/18/20',ax)
-    #plot_country("Ireland",dataParam,displayParam,fitParam,'3/28/20',ax)
+if zone == "continents":
+    plot_phase_country("EU",dataParam,displayParam,fitParam,'3/22/21',ax)
+    #plot_phase_country("European continent",dataParam,displayParam,fitParam,'3/22/21',ax)
+    plot_phase_country("China",dataParam,displayParam,fitParam,'1/22/22',ax)
+    plot_phase_country("US",dataParam,displayParam,fitParam,'3/22/20',ax)
+elif zone == "countries":
+    #plot_phase_country("China",dataParam,displayParam,fitParam,'1/22/22',ax)
+    #plot_phase_country("US",dataParam,displayParam,fitParam,'3/22/20',ax)
+    plot_phase_country("Italy",dataParam,displayParam,fitParam,'3/9/20',ax)
+    plot_phase_country("Spain",dataParam,displayParam,fitParam,'3/14/20',ax)
+    plot_phase_country("Germany",dataParam,displayParam,fitParam,'3/19/20',ax)
+    plot_phase_country("France",dataParam,displayParam,fitParam,'3/17/20',ax)
+    #plot_phase_country("Iran",dataParam,displayParam,fitParam,'8/17/20',ax)
+    plot_phase_country("Korea, South",dataParam,displayParam,fitParam,'5/22/20',ax)
+    #plot_phase_country("Japan",dataParam,displayParam,fitParam,'5/22/20',ax)
+    #plot_phase_country("Switzerland",dataParam,displayParam,fitParam,'5/22/20',ax)
+    #plot_phase_country("United Kingdom",dataParam,displayParam,fitParam,'3/22/20',ax)
+    #plot_phase_country("Denmark",dataParam,displayParam,fitParam,'3/13/20',ax)
+    #plot_phase_country("Norway",dataParam,displayParam,fitParam,'3/12/20',ax)
+    #plot_phase_country("Sweden",dataParam,displayParam,fitParam,'3/28/20',ax)
+    #plot_phase_country("Finland",dataParam,displayParam,fitParam,'3/19/20',ax)
+    #plot_phase_country("Canada",dataParam,displayParam,fitParam,'5/22/20',ax)
+    #plot_phase_country("Belgium",dataParam,displayParam,fitParam,'3/18/20',ax)
+    #plot_phase_country("Ireland",dataParam,displayParam,fitParam,'3/28/20',ax)
 
 if dataParam['EvolutionType'] == "R0": ax.axhline(1)
 ax.set_title(displayParam['title'])
 ax.set_yscale(displayParam['YScale'])
-ax.set_xlabel("Date")
-ax.xaxis.set_major_locator(ticker.MultipleLocator(daysInterval))
-ax.xaxis.set_minor_locator(ticker.MultipleLocator(1))
-ax.set_ylabel(displayParam['YaxisLabel'])
+#ax.set_xscale('log')
+ax.set_xlabel(r'Gradient [new case/day]')
+ax.set_ylabel(r'Curvature [new case/day$^2$]')
+#ax.xaxis.set_major_locator(ticker.MultipleLocator(daysInterval))
+#ax.xaxis.set_minor_locator(ticker.MultipleLocator(1))
 ax.legend(loc=2)
 ax.grid(which='major',color='grey', linestyle='-', linewidth=1)
 ax.grid(which='minor',color='grey', linestyle='-', linewidth=0.5)

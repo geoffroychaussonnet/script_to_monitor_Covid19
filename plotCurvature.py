@@ -126,7 +126,63 @@ def dateIn(strDate):
     year = int("20%s" %spl[2])
     return datetime.date(year, month,day)
 
-def scatter_curvature_vs_time(strCountry,dataParam,displayParam,fitParam,quarParam,ax):
+def scatter_curvature_vs_X_World(dataParam,displayParam,fitParam,quarParam,ax):
+    print("########## Treating World #############")
+    quarDate = quarParam
+    fittingPeriod = fitParam[0]
+    extrapolPeriod = fitParam[1]
+    iExtrapol = fitParam[2]
+
+    lstDoneCountry = []
+    matCountry = []
+    for strCountry in dataParam["Confirmed"]["Country/Region"]:
+        if strCountry not in lstDoneCountry:
+            lstDoneCountry.append(strCountry)
+            evol1 = evolution_country(strCountry,dataParam)
+            matCountry.append(evol1)
+
+    periodX = []
+    curvY = []
+    gradY = []
+    totPop = []
+    lstFoundCountry = []
+    for strCountry,evol0 in zip(lstDoneCountry,matCountry):
+        check = (evol0>100)
+        evol = savgol_filter(evol0, dataParam['Smoothing'][0], dataParam['Smoothing'][1]) # arg2: window size; arg3:  polynomial order 
+
+        locPeriod = sum(check)
+        if locPeriod>2:
+            periodX.append(sum(check))
+            curvature = np.diff(evol[check],2).mean()
+            gradient = np.diff(evol[check],1).mean()
+            curvY.append(curvature)
+            gradY.append(gradient)
+            lstFoundCountry.append(strCountry)
+            totPop.append(evol0[-1])
+            print(strCountry, locPeriod, curvature)
+
+    periodX = np.array(periodX)
+    curvY = np.array(curvY)
+    totPop = np.array(totPop)
+    gradY = np.array(gradY)
+
+    col1 = 'black'
+    col2 = 'green'
+    posi = (curvY>0)
+
+    xaxis = periodX
+    xaxis = totPop
+    xaxis = gradY
+
+    ax.scatter(xaxis[posi],curvY[posi],color=col1)
+    ax.scatter(xaxis[np.invert(posi)],-curvY[np.invert(posi)],color=col2)
+    for cntry,x,y in zip(lstFoundCountry,xaxis,curvY):
+        if y>0:
+            ax.annotate(cntry, xy=(x,y), xytext=(3, 3), textcoords="offset points", ha='center', va='bottom',color=col1,weight='bold')
+        else:
+            ax.annotate(cntry, xy=(x,-y), xytext=(3, 3), textcoords="offset points", ha='center', va='bottom',color=col2,weight='bold')
+
+def plot_curvature_vs_gradient(strCountry,dataParam,displayParam,fitParam,quarParam,ax):
     print("########## Treating country: ", strCountry, " #############")
     quarDate = quarParam
     fittingPeriod = fitParam[0]
@@ -143,6 +199,7 @@ def scatter_curvature_vs_time(strCountry,dataParam,displayParam,fitParam,quarPar
 
     periodX = []
     curvY = []
+    gradY = []
     totPop = []
     lstFoundCountry = []
     for strCountry,evol0 in zip(lstDoneCountry,matCountry):
@@ -153,7 +210,9 @@ def scatter_curvature_vs_time(strCountry,dataParam,displayParam,fitParam,quarPar
         if locPeriod>2:
             periodX.append(sum(check))
             curvature = np.diff(evol[check],2).mean()
+            gradient = np.diff(evol[check],1).mean()
             curvY.append(curvature)
+            gradY.append(gradient)
             lstFoundCountry.append(strCountry)
             totPop.append(evol0[-1])
             print(strCountry, locPeriod, curvature)
@@ -161,6 +220,7 @@ def scatter_curvature_vs_time(strCountry,dataParam,displayParam,fitParam,quarPar
     periodX = np.array(periodX)
     curvY = np.array(curvY)
     totPop = np.array(totPop)
+    gradY = np.array(gradY)
 
     col1 = 'black'
     col2 = 'green'
@@ -168,13 +228,11 @@ def scatter_curvature_vs_time(strCountry,dataParam,displayParam,fitParam,quarPar
 
     xaxis = periodX
     xaxis = totPop
-    print(periodX)
-    print(totPop)
+    xaxis = gradY
 
     ax.scatter(xaxis[posi],curvY[posi],color=col1)
     ax.scatter(xaxis[np.invert(posi)],-curvY[np.invert(posi)],color=col2)
     for cntry,x,y in zip(lstFoundCountry,xaxis,curvY):
-        print("PROUT: ", x,y,cntry)
         if y>0:
             ax.annotate(cntry, xy=(x,y), xytext=(3, 3), textcoords="offset points", ha='center', va='bottom',color=col1,weight='bold')
         else:
@@ -315,7 +373,7 @@ close(1)
 fig = figure(num=1,figsize=(10,6))
 ax = fig.add_subplot(111)
 
-scatter_curvature_vs_time("World",dataParam,displayParam,fitParam,'3/22/21',ax)
+scatter_curvature_vs_X_World("World",dataParam,displayParam,fitParam,'3/22/21',ax)
 
 #ax.set_title(displayParam['title'])
 ax.set_xscale(displayParam['YScale'])
