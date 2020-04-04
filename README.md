@@ -1,5 +1,5 @@
 
-# COVID Curves
+# COVID-19 Evolution Curves
 
 Scripts to monitor the evolution of COVID-19 propagation for each countries, based on data aggregated by the Johns Hopkins University (https://github.com/CSSEGISandData/COVID-19).
 
