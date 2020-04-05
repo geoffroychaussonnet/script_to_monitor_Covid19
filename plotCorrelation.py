@@ -8,6 +8,7 @@ import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
 import datetime as dt
 from scipy.signal import savgol_filter
+from pathlib import Path
 
 ############### Basic use #############################
 # example: plot_country("US",dataParam,displayParam,fitParam,'3/22/20',ax)
@@ -20,7 +21,8 @@ from scipy.signal import savgol_filter
 
 ################ Parameters to define manually (BEGIN) ######################
 # Path to the folder containing the time series:
-path="../csse_covid_19_data/csse_covid_19_time_series/"
+path="https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/"
+figures_path = "../FIGURES"
 daysInterval = 7   # To set Major x-axis
 startDate = datetime.date(2020, 3,1)   # Start date of the plot:
 extrapolPeriod = 14     # How many days to extrapolate?
@@ -52,7 +54,6 @@ vSmoothing = [7,3]  # [window size,order of fitting polynomial]
 #zone = "continents"
 zone = "countries"
 ################ Parameters to define manually (END) ######################
-
 
 ######################## Definition of Functions (BEGIN) ############################
 
@@ -252,7 +253,8 @@ def setDisplayParam(field,evolutionType,yscale,zone):
     displayParam['YaxisLabel'] = txtYaxis
 
     strDateToday = dt.date.today().strftime("%Y%m%d")
-    fname = "../FIGURES/%s_evolCovid19_%s_%s_for_%s.png" %(strDateToday,txtEvol,txtField,zone)
+    Path(figures_path).mkdir(parents=True)
+    fname = figures_path + "/%s_evolCovid19_%s_%s_for_%s.png" %(strDateToday,txtEvol,txtField,zone)
     displayParam['FileName'] = fname.replace(" ","_")
     displayParam['YScale'] = yscale
     return displayParam
