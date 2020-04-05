@@ -5,7 +5,16 @@ Scripts to monitor the evolution of COVID-19 propagation for each countries, bas
 
 ### Prerequisites
 Scripts were developped with Python 3.6.8, matplotlib 2.2.2, pandas 0.25.3 and scipy 1.2.0.
-The data files from Johns Hopkins University must be installed locally.
+
+### Installation
+To create a new virtual environment:
+
+    $ virtualenv venv
+    $ source venv/bin/activate
+    
+To install the dependencies:
+
+    $ pip install -r requirements.txt 
 
 ### Getting Started
 The two main scripts are:
