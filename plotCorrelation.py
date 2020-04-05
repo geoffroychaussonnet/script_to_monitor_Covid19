@@ -253,7 +253,7 @@ def setDisplayParam(field,evolutionType,yscale,zone):
     displayParam['YaxisLabel'] = txtYaxis
 
     strDateToday = dt.date.today().strftime("%Y%m%d")
-    Path(figures_path).mkdir(parents=True)
+    Path(figures_path).mkdir(parents=True, exist_ok=True)
     fname = figures_path + "/%s_evolCovid19_%s_%s_for_%s.png" %(strDateToday,txtEvol,txtField,zone)
     displayParam['FileName'] = fname.replace(" ","_")
     displayParam['YScale'] = yscale
