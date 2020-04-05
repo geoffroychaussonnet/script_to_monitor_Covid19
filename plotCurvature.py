@@ -128,7 +128,7 @@ def dateIn(strDate):
     year = int("20%s" %spl[2])
     return datetime.date(year, month,day)
 
-def scatter_curvature_vs_X_World(dataParam,displayParam,fitParam,quarParam,ax):
+def scatter_curvature_vs_X_World(strCountry, dataParam,displayParam,fitParam,quarParam,ax):
     print("########## Treating World #############")
     quarDate = quarParam
     fittingPeriod = fitParam[0]
