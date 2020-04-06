@@ -46,19 +46,6 @@ vSmoothing = [7,3]  # [window size,order of fitting polynomial]
 
 ######################## Definition of Functions ############################
 
-def evolution_country(strCountry,dataParam):
-
-    evolution = evolution_country_aux(field, strCountry, dataParam)
-
-    if dataParam['EvolutionType'] == "cumulative":
-        evol =  evolution[dataParam['FilterDate']]
-    elif dataParam['EvolutionType'] == "daily":
-        dedt = np.zeros(len(evolution))
-        dedt[1:] = (np.roll(evolution,-1) - evolution)[:-1]
-        evol = dedt[dataParam['FilterDate']]
-
-    return evol
-
 def get_trend(dates,evol1,fitParam,extParam):
     dtFitBeg = fitParam[0]
     dtFitEnd = fitParam[1]
@@ -108,7 +95,7 @@ def scatter_curvature_vs_X_World(strCountry, dataParam,displayParam,fitParam,qua
     for strCountry in dataParam["Confirmed"]["Country/Region"]:
         if strCountry not in lstDoneCountry:
             lstDoneCountry.append(strCountry)
-            evol1 = evolution_country(strCountry,dataParam)
+            evol1 = evolution_country(strCountry,dataParam,displayParam)
             matCountry.append(evol1)
 
     periodX = []
@@ -164,7 +151,7 @@ def plot_curvature_vs_gradient(strCountry,dataParam,displayParam,fitParam,quarPa
     for strCountry in dataParam["Confirmed"]["Country/Region"]:
         if strCountry not in lstDoneCountry:
             lstDoneCountry.append(strCountry)
-            evol1 = evolution_country(strCountry,dataParam)
+            evol1 = evolution_country(strCountry,dataParam,displayParam)
             matCountry.append(evol1)
 
     periodX = []
@@ -216,7 +203,7 @@ def plot_country(strCountry,dataParam,displayParam,fitParam,quarParam,ax):
     iExtrapol = fitParam[2]
 
     # Extract evolution for this country
-    evol1 = evolution_country(strCountry,dataParam)
+    evol1 = evolution_country(strCountry,dataParam,displayParam)
 
     # find the quarantine date 
     iQuar = np.where(dataParam['Dates']>=dateIn(quarDate))
@@ -289,6 +276,7 @@ def setDisplayParam(field,evolutionType,yscale):
 
     txtTitle = "%s %s in some Western countries\n (Source: Johns Hopkins University)" %(txtEvol,txtField)
     txtYaxis = "%s %s %s" %(txtEvol,txtField,strUnit)
+    displayParam['Field'] = field
     displayParam['title'] = txtTitle
     displayParam['YaxisLabel'] = txtYaxis
 

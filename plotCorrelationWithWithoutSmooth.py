@@ -49,36 +49,6 @@ vSmoothing = [5,3]  # [window size,order of fitting polynomial]
 
 ######################## Definition of Functions ############################
 
-def evolution_country(strCountry,dataParam):
-
-    evolution = evolution_country_aux(field, strCountry, dataParam)
-
-    if dataParam['EvolutionType'] == "cumulative":
-        evol =  evolution[dataParam['FilterDate']]
-    elif dataParam['EvolutionType'] == "daily":
-        dedt = np.zeros(len(evolution))
-        dedt[1:] = np.diff(evolution)
-        evol = dedt[dataParam['FilterDate']]
-    elif dataParam['EvolutionType'] == "curvature":
-        d2edt2 = np.zeros(len(evolution))
-        d2edt2[2:] = np.diff(evolution,2)
-        evol = d2edt2[dataParam['FilterDate']]
-    elif dataParam['EvolutionType'] == "smoothedCurvature":
-        dedt = np.diff(evolution)
-        evol = savgol_filter(dedt, dataParam['Smoothing'][0], dataParam['Smoothing'][1]) # arg2: window size; arg3:  polynomial order
-        d2edt2 = np.zeros(len(evolution))
-        d2edt2[2:] = np.diff(evol)/evol[-1]
-        evol = d2edt2[dataParam['FilterDate']]
-    elif dataParam['EvolutionType'] == "R0":
-        R0 = np.zeros(len(evolution))
-        delta0 = np.diff(evolution)
-        delta = savgol_filter(delta0, dataParam['Smoothing'][0], dataParam['Smoothing'][1]) # arg2: window size; arg3:  polynomial order
-        R0[1:] = delta/np.roll(delta,5)
-        evol = R0[dataParam['FilterDate']]
-
-    return evol
-
-
 def get_trend(dates,evol1,fitParam,extParam):
     dtFitBeg = fitParam[0]
     dtFitEnd = fitParam[1]
@@ -124,7 +94,7 @@ def plot_country(strCountry,dataParam,displayParam,fitParam,quarParam,ax):
     iExtrapol = fitParam[2]
 
     # Extract evolution for this country
-    evol1 = evolution_country(strCountry,dataParam)
+    evol1 = evolution_country(strCountry,dataParam,displayParam)
 
     # find the quarantine date 
     iQuar = np.where(dataParam['Dates']>=dateIn(quarDate))
@@ -209,6 +179,7 @@ def setDisplayParam(field,evolutionType,yscale):
 
     txtTitle = "%s %s in some Western countries\n (Source: Johns Hopkins University)" %(txtEvol,txtField)
     txtYaxis = "%s %s %s" %(txtEvol,txtField,strUnit)
+    displayParam['Field'] = field
     displayParam['title'] = txtTitle
     displayParam['YaxisLabel'] = txtYaxis
 

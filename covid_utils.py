@@ -39,8 +39,6 @@ def evolution_single(strCountry,data):
         lstCountry = ["France", "Germany", "Spain", "Italy", "Netherlands", "Portugal", "Belgium", "Sweden", "Finland", "Greece", "Ireland", "Poland", "Luxembourg", "Malta","Slovenia", "Austria", "Croatia", "Hungary", "Czechia", "Slovakia", "Hungary", "Romania", "Bulgaria", "Cyprus", "Lithuania","Latvia","Estonia"]
     elif strCountry == "European continent":
         lstCountry = ["France", "Germany", "Spain", "Italy", "Netherlands", "Portugal", "Belgium", "Sweden", "Finland", "Greece", "Ireland", "United Kingdom", "Norway","Switzerland", "Poland", "Andorra","Luxembourg", "Liechtenstein", "Malta", "San Marino", "Holy See","Monaco","Hungary", "Czechia","Slovakia", "Slovenia", "Croatia","Bosnia and Herzegovina", "Serbia", "Albania", "Romania", "Bulgaria", "Ukraine", "Belarus", "Latvia", "Estonia", "Lithuania","Moldova","North Macedonia", "Kosovo","Montenegro","Iceland","Cyprus"]
-    elif strCountry == "EUW":  # TODO: What does EUW stand for?
-        lstCountry = ["France", "Germany", "Spain", "Italy", "Netherlands", "Portugal", "Belgium", "Sweden", "Finland", "Greece", "Ireland", "United Kingdom", "Norway","Switzerland", "Poland", "Andorra","Luxembourg", "Liechtenstein", "Malta", "San Marino", "Holy See","Monaco"]
 
     for ic,cntry in enumerate(data['Country/Region']):
         if (cntry in lstCountry) or (strCountry=="World"):
@@ -54,7 +52,19 @@ def evolution_single(strCountry,data):
 def evolution_country(strCountry,dataParam,displayParam):
 
     field = displayParam['Field']
-    evolution = evolution_country_aux(field, strCountry, dataParam)
+    if field=="Confirmed":
+        evolution = evolution_single(strCountry,dataParam['Confirmed'])
+    elif field=="Deaths":
+        evolution = evolution_single(strCountry,dataParam['Deaths'])
+    elif field=="Active":
+        evolC = evolution_single(strCountry,dataParam['Confirmed'])
+        evolD = evolution_single(strCountry,dataParam['Deaths'])
+        evolR = evolution_single(strCountry,dataParam['Recovered'])
+        evolution = evolC - evolR - evolD
+    elif field=="DeathRate":
+        evolC = evolution_single(strCountry,dataParam['Confirmed'])
+        evolD = evolution_single(strCountry,dataParam['Deaths'])
+        evolution = evolD/evolC*100
 
     if dataParam['EvolutionType'] == "cumulative":
         evol =  evolution[dataParam['FilterDate']]
@@ -80,23 +90,6 @@ def evolution_country(strCountry,dataParam,displayParam):
         evol = R0[dataParam['FilterDate']]
 
     return evol
-
-
-def evolution_country_aux(field, strCountry, dataParam):
-    if field == "Confirmed":
-        evolution = evolution_single(strCountry, dataParam['Confirmed'])
-    elif field == "Deaths":
-        evolution = evolution_single(strCountry, dataParam['Deaths'])
-    elif field == "Active":
-        evolC = evolution_single(strCountry, dataParam['Confirmed'])
-        evolD = evolution_single(strCountry, dataParam['Deaths'])
-        evolR = evolution_single(strCountry, dataParam['Recovered'])
-        evolution = evolC - evolR - evolD
-    elif field == "DeathRate":
-        evolC = evolution_single(strCountry, dataParam['Confirmed'])
-        evolD = evolution_single(strCountry, dataParam['Deaths'])
-        evolution = evolD / evolC * 100
-    return evolution
 
 
 def dateOut(date):
