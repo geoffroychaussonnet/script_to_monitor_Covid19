@@ -36,6 +36,7 @@ The two main scripts are:
 ## Authors
 
 * **Geoffroy Chaussonnet** - *Initial work* 
+* **Julien Férard** - *Improvements, code maintenance*
 
 ## License
 
