@@ -3,6 +3,7 @@ import pandas as pd
 import datetime as dt
 from scipy.signal import savgol_filter
 
+
 def loadData(path,field,evolutionType,vSmoothing,startDate=dt.date(2020, 1,1)):
     dataParam = {}
     dataParam['Confirmed'] = pd.read_csv(path+"time_series_covid19_confirmed_global.csv")
@@ -27,6 +28,7 @@ def loadData(path,field,evolutionType,vSmoothing,startDate=dt.date(2020, 1,1)):
 
     return dataParam
 
+
 def evolution_single(strCountry,data):
 
     size=len(data.iloc[0].values[4:])
@@ -37,6 +39,8 @@ def evolution_single(strCountry,data):
         lstCountry = ["France", "Germany", "Spain", "Italy", "Netherlands", "Portugal", "Belgium", "Sweden", "Finland", "Greece", "Ireland", "Poland", "Luxembourg", "Malta","Slovenia", "Austria", "Croatia", "Hungary", "Czechia", "Slovakia", "Hungary", "Romania", "Bulgaria", "Cyprus", "Lithuania","Latvia","Estonia"]
     elif strCountry == "European continent":
         lstCountry = ["France", "Germany", "Spain", "Italy", "Netherlands", "Portugal", "Belgium", "Sweden", "Finland", "Greece", "Ireland", "United Kingdom", "Norway","Switzerland", "Poland", "Andorra","Luxembourg", "Liechtenstein", "Malta", "San Marino", "Holy See","Monaco","Hungary", "Czechia","Slovakia", "Slovenia", "Croatia","Bosnia and Herzegovina", "Serbia", "Albania", "Romania", "Bulgaria", "Ukraine", "Belarus", "Latvia", "Estonia", "Lithuania","Moldova","North Macedonia", "Kosovo","Montenegro","Iceland","Cyprus"]
+    elif strCountry == "EUW":  # TODO: What does EUW stand for?
+        lstCountry = ["France", "Germany", "Spain", "Italy", "Netherlands", "Portugal", "Belgium", "Sweden", "Finland", "Greece", "Ireland", "United Kingdom", "Norway","Switzerland", "Poland", "Andorra","Luxembourg", "Liechtenstein", "Malta", "San Marino", "Holy See","Monaco"]
 
     for ic,cntry in enumerate(data['Country/Region']):
         if (cntry in lstCountry) or (strCountry=="World"):
@@ -46,22 +50,11 @@ def evolution_single(strCountry,data):
 
     return evolution
 
+
 def evolution_country(strCountry,dataParam,displayParam):
 
     field = displayParam['Field']
-    if field=="Confirmed":
-        evolution = evolution_single(strCountry,dataParam['Confirmed'])
-    elif field=="Deaths":
-        evolution = evolution_single(strCountry,dataParam['Deaths'])
-    elif field=="Active":
-        evolC = evolution_single(strCountry,dataParam['Confirmed'])
-        evolD = evolution_single(strCountry,dataParam['Deaths'])
-        evolR = evolution_single(strCountry,dataParam['Recovered'])
-        evolution = evolC - evolR - evolD
-    elif field=="DeathRate":
-        evolC = evolution_single(strCountry,dataParam['Confirmed'])
-        evolD = evolution_single(strCountry,dataParam['Deaths'])
-        evolution = evolD/evolC*100
+    evolution = evolution_country_aux(field, strCountry, dataParam)
 
     if dataParam['EvolutionType'] == "cumulative":
         evol =  evolution[dataParam['FilterDate']]
@@ -88,8 +81,28 @@ def evolution_country(strCountry,dataParam,displayParam):
 
     return evol
 
+
+def evolution_country_aux(field, strCountry, dataParam):
+    if field == "Confirmed":
+        evolution = evolution_single(strCountry, dataParam['Confirmed'])
+    elif field == "Deaths":
+        evolution = evolution_single(strCountry, dataParam['Deaths'])
+    elif field == "Active":
+        evolC = evolution_single(strCountry, dataParam['Confirmed'])
+        evolD = evolution_single(strCountry, dataParam['Deaths'])
+        evolR = evolution_single(strCountry, dataParam['Recovered'])
+        evolution = evolC - evolR - evolD
+    elif field == "DeathRate":
+        evolC = evolution_single(strCountry, dataParam['Confirmed'])
+        evolD = evolution_single(strCountry, dataParam['Deaths'])
+        evolution = evolD / evolC * 100
+    return evolution
+
+
 def dateOut(date):
     return date.strftime('%m/%d/%y').lstrip("0").replace("/0", "/")
+
+
 def dateIn(strDate):
     spl = strDate.split('/')
     month = int(spl[0])
@@ -97,3 +110,13 @@ def dateIn(strDate):
     year = int("20%s" %spl[2])
     return dt.date(year, month,day)
 
+
+def setFitExtraParam(field, fittingPeriod, extrapolPeriod,dataParam,iExtrapol):
+    if field=="Confirmed":
+        return [fittingPeriod, 14, iExtrapol]
+    elif field=="Deaths":
+        return [fittingPeriod, 21, iExtrapol]
+    elif field=="Active":
+        return [fittingPeriod, 21, iExtrapol]
+    elif field=="DeathRate":
+        return [fittingPeriod, 21, iExtrapol]

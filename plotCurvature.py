@@ -7,6 +7,7 @@ import matplotlib.ticker as ticker
 import datetime as dt
 from scipy.signal import savgol_filter
 from pathlib import Path
+from covid_utils import *
 
 ############### Basic use #############################
 # example: plot_country("France",dataParam,fitParam,'3/17/20',ax)
@@ -45,34 +46,9 @@ vSmoothing = [7,3]  # [window size,order of fitting polynomial]
 
 ######################## Definition of Functions ############################
 
-def evolution_single(strCountry,data):
-    if strCountry == "World":
-        icountry = range(len(data))
-    else:
-        icountry = data[data["Country/Region"]==strCountry].index.values
-    size=len(data.iloc[icountry[0]].values[4:])
-    evolution = zeros(size,dtype=int)
-    for ic in icountry:
-        locRegion = data.iloc[ic].values[4:]
-        locRegion[isnan(locRegion.tolist())] = 0
-        evolution[:] += locRegion.astype(int)
-    return evolution
-
 def evolution_country(strCountry,dataParam):
 
-    if field=="Confirmed":
-        evolution = evolution_single(strCountry,dataParam['Confirmed'])
-    elif field=="Deaths":
-        evolution = evolution_single(strCountry,dataParam['Deaths'])
-    elif field=="Active":
-        evolC = evolution_single(strCountry,dataParam['Confirmed'])
-        evolD = evolution_single(strCountry,dataParam['Deaths'])
-        evolR = evolution_single(strCountry,dataParam['Recovered'])
-        evolution = evolC - evolR - evolD
-    elif field=="DeathRate":
-        evolC = evolution_single(strCountry,dataParam['Confirmed'])
-        evolD = evolution_single(strCountry,dataParam['Deaths'])
-        evolution = evolD/evolC*100
+    evolution = evolution_country_aux(field, strCountry, dataParam)
 
     if dataParam['EvolutionType'] == "cumulative":
         evol =  evolution[dataParam['FilterDate']]
@@ -119,14 +95,6 @@ def get_trend(dates,evol1,fitParam,extParam):
 
     return xcorrel1, correl1, strRate
 
-def dateOut(date):
-    return date.strftime('%m/%d/%y').lstrip("0").replace("/0", "/")
-def dateIn(strDate):
-    spl = strDate.split('/')
-    month = int(spl[0])
-    day = int(spl[1])
-    year = int("20%s" %spl[2])
-    return datetime.date(year, month,day)
 
 def scatter_curvature_vs_X_World(strCountry, dataParam,displayParam,fitParam,quarParam,ax):
     print("########## Treating World #############")
@@ -331,46 +299,12 @@ def setDisplayParam(field,evolutionType,yscale):
     displayParam['YScale'] = yscale
     return displayParam
 
-def loadData(path,field,evolutionType,vSmoothing,startDate=datetime.date(2020, 1,1)):
-    dataParam = {}
-    dataParam['Confirmed'] = pd.read_csv(path+"time_series_covid19_confirmed_global.csv")
-    dataParam['Deaths'] = pd.read_csv(path+"time_series_covid19_deaths_global.csv")
-    dataParam['Recovered'] = pd.read_csv(path+"time_series_covid19_recovered_global.csv")
-    dataParam['Field'] = field
-    dataParam['EvolutionType'] = evolutionType
-    dataParam['Smoothing'] = vSmoothing
-    #dateax = dataParam['Confirmed'].columns[4:].values.astype(str)
-    dateax = dataParam['Deaths'].columns[4:].values.astype(str)
-
-    # Convert date axis to date vector
-    dates = np.array([dt.datetime.strptime(plof,'%m/%d/%y').date() for plof in dateax])
-
-    # Filter axe of dates
-    filterDate = (dates>=startDate)
-    dateax = dateax[filterDate]
-    dates = dates[filterDate]
-
-    dataParam['FilterDate'] = filterDate
-    dataParam['DateAxis'] = dateax
-    dataParam['Dates'] = dates
-
-    return dataParam
-
-def setFitExtraParam(fittingPeriod, extrapolPeriod,dataParam,iExtrapol):
-    if field=="Confirmed":
-        return [fittingPeriod, 14, iExtrapol]
-    elif field=="Deaths":
-        return [fittingPeriod, 21, iExtrapol]
-    elif field=="Active":
-        return [fittingPeriod, 21, iExtrapol]
-    elif field=="DeathRate":
-        return [fittingPeriod, 21, iExtrapol]
 
 ######################## Definition of Functions ############################
 
 dataParam = loadData(path,field,evolutionType,vSmoothing,startDate=startDate)
 displayParam = setDisplayParam(field,evolutionType,yscale)
-fitParam = setFitExtraParam(fittingPeriod, extrapolPeriod,dataParam,iExtrapol)
+fitParam = setFitExtraParam(field,fittingPeriod, extrapolPeriod,dataParam,iExtrapol)
 
 close(1)
 fig = figure(num=1,figsize=(10,6))

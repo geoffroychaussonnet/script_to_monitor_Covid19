@@ -94,14 +94,6 @@ def get_trend(dates,evol1,fitParam,extParam):
 
     return xcorrel1, correl1, strRate
 
-def dateOut(date):
-    return date.strftime('%m/%d/%y').lstrip("0").replace("/0", "/")
-def dateIn(strDate):
-    spl = strDate.split('/')
-    month = int(spl[0])
-    day = int(spl[1])
-    year = int("20%s" %spl[2])
-    return datetime.date(year, month,day)
 
 def plot_country(strCountry,dataParam,displayParam,fitParam,quarParam,ax):
     print("########## Treating country: %12s ###########" %strCountry)
@@ -201,15 +193,6 @@ def setDisplayParam(field,evolutionType,yscale,zone):
     displayParam['YScale'] = yscale
     return displayParam
 
-def setFitExtraParam(fittingPeriod, extrapolPeriod,dataParam,iExtrapol):
-    if field=="Confirmed":
-        return [fittingPeriod, 14, iExtrapol]
-    elif field=="Deaths":
-        return [fittingPeriod, 21, iExtrapol]
-    elif field=="Active":
-        return [fittingPeriod, 21, iExtrapol]
-    elif field=="DeathRate":
-        return [fittingPeriod, 21, iExtrapol]
 
 ######################## Definition of Functions (END) ############################
 
@@ -219,7 +202,7 @@ def setFitExtraParam(fittingPeriod, extrapolPeriod,dataParam,iExtrapol):
 # Initialisation
 dataParam = loadData(path,field,evolutionType,vSmoothing,startDate=startDate)
 displayParam = setDisplayParam(field,evolutionType,yscale,zone)
-fitParam = setFitExtraParam(fittingPeriod, extrapolPeriod,dataParam,iExtrapol)
+fitParam = setFitExtraParam(field,fittingPeriod, extrapolPeriod,dataParam,iExtrapol)
 
 # Set graphic objects
 close(1)
