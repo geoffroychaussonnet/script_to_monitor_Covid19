@@ -1,3 +1,6 @@
+import datetime
+from pathlib import Path
+
 import numpy as np
 import pandas as pd
 import datetime as dt
@@ -113,3 +116,53 @@ def setFitExtraParam(field, fittingPeriod, extrapolPeriod,dataParam,iExtrapol):
         return [fittingPeriod, 21, iExtrapol]
     elif field=="DeathRate":
         return [fittingPeriod, 21, iExtrapol]
+
+
+def unit_and_field(field):
+    strUnit = "[-]"
+    if field == "Confirmed":
+        txtField = "confirmed cases"
+    elif field == "Deaths":
+        txtField = "deaths"
+    elif field == "Active":
+        txtField = "active cases"
+    elif field == "DeathRate":
+        txtField = "death rate"
+        strUnit = "[%]"
+    return strUnit, txtField
+
+
+def txt_evol(evolutionType):
+    if evolutionType == 'cumulative':
+        txtEvol = "Cumulative"
+    elif evolutionType == 'daily':
+        txtEvol = 'Daily'
+    elif evolutionType == 'curvature':
+        txtEvol = 'Derivative of daily'
+    elif evolutionType == 'smoothedCurvature':
+        txtEvol = 'Derivative of smoothed daily'
+    elif evolutionType == 'R0':
+        txtEvol = 'R0 from'
+    return txtEvol
+
+
+def title_and_y_axis(displayParam, field, strUnit, txtEvol, txtField,
+                     txt_title_format):
+    txtTitle = txt_title_format % (txtEvol, txtField)
+    txtYaxis = "%s %s %s" % (txtEvol, txtField, strUnit)
+    displayParam['Field'] = field
+    displayParam['title'] = txtTitle
+    displayParam['YaxisLabel'] = txtYaxis
+
+
+def file_yscale(displayParam, figures_path, png_format, txtEvol, txtField, yscale, zone):
+    strDateToday = dt.date.today().strftime("%Y%m%d")
+    Path(figures_path).mkdir(parents=True, exist_ok=True)
+    if zone:
+        fname = figures_path + "/" + png_format % (
+        strDateToday, txtEvol, txtField, zone)
+    else:
+        fname = figures_path + "/" + png_format % (
+            strDateToday, txtEvol, txtField)
+    displayParam['FileName'] = fname.replace(" ", "_")
+    displayParam['YScale'] = yscale

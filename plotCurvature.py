@@ -1,11 +1,6 @@
 # Author: Geoffroy Chaussonnet
 
 from pylab import *
-import pandas as pd
-import matplotlib.pyplot as plt
-import matplotlib.ticker as ticker
-import datetime as dt
-from scipy.signal import savgol_filter
 from pathlib import Path
 from covid_utils import *
 
@@ -20,6 +15,8 @@ from covid_utils import *
 
 ################ Parameters to define manually ######################
 # Path to the folder containing the time series:
+from covid_utils import unit_and_field, txt_evol
+
 path="https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/"
 figures_path = "../FIGURES"
 daysInterval = 7   # To set Major x-axis
@@ -258,33 +255,15 @@ def plot_country(strCountry,dataParam,displayParam,fitParam,quarParam,ax):
 def setDisplayParam(field,evolutionType,yscale):
     displayParam = {}
 
-    strUnit = "[-]"
-    if field=="Confirmed":
-        txtField = "confirmed cases"
-    elif field=="Deaths":
-        txtField = "deaths"
-    elif field=="Active":
-        txtField = "active cases"
-    elif field=="DeathRate":
-        txtField = "death rate"
-        strUnit = "[%]"
+    strUnit, txtField = unit_and_field(field)
+    txtEvol = txt_evol(evolutionType)
 
-    if evolutionType == 'cumulative':
-        txtEvol = "Cumulative"
-    elif evolutionType == 'daily':
-        txtEvol = 'Daily'
+    txt_title_format = "%s %s in some Western countries\n (Source: Johns Hopkins University)"
+    title_and_y_axis(displayParam, field, strUnit, txtEvol, txtField,
+                     txt_title_format)
 
-    txtTitle = "%s %s in some Western countries\n (Source: Johns Hopkins University)" %(txtEvol,txtField)
-    txtYaxis = "%s %s %s" %(txtEvol,txtField,strUnit)
-    displayParam['Field'] = field
-    displayParam['title'] = txtTitle
-    displayParam['YaxisLabel'] = txtYaxis
-
-    strDateToday = dt.date.today().strftime("%Y%m%d")
-    Path(figures_path).mkdir(parents=True, exist_ok=True)
-    fname = figures_path + "/%s_Covid19_scatter_curvature_vs_period_%s_%s.png" %(strDateToday,txtEvol,txtField)
-    displayParam['FileName'] = fname.replace(" ","_")
-    displayParam['YScale'] = yscale
+    png_format = "%s_Covid19_scatter_curvature_vs_period_%s_%s.png"
+    file_yscale(displayParam, figures_path, png_format, txtEvol, txtField, yscale, None)
     return displayParam
 
 

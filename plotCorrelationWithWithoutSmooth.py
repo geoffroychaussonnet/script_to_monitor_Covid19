@@ -155,39 +155,15 @@ def plot_country(strCountry,dataParam,displayParam,fitParam,quarParam,ax):
 def setDisplayParam(field,evolutionType,yscale):
     displayParam = {}
 
-    strUnit = "[-]"
-    if field=="Confirmed":
-        txtField = "confirmed cases"
-    elif field=="Deaths":
-        txtField = "deaths"
-    elif field=="Active":
-        txtField = "active cases"
-    elif field=="DeathRate":
-        txtField = "death rate"
-        strUnit = "[%]"
+    strUnit, txtField = unit_and_field(field)
+    txtEvol = txt_evol(evolutionType)
 
-    if evolutionType == 'cumulative':
-        txtEvol = "Cumulative"
-    elif evolutionType == 'daily':
-        txtEvol = 'Daily'
-    elif evolutionType == 'curvature':
-        txtEvol = 'Derivative of daily'
-    elif evolutionType == 'smoothedCurvature':
-        txtEvol = 'Derivative of smoothed daily'
-    elif evolutionType == 'R0':
-        txtEvol = 'R0 from'
+    txt_title_format = "%s %s in some Western countries\n (Source: Johns Hopkins University)"
+    title_and_y_axis(displayParam, field, strUnit, txtEvol, txtField,
+                     txt_title_format)
 
-    txtTitle = "%s %s in some Western countries\n (Source: Johns Hopkins University)" %(txtEvol,txtField)
-    txtYaxis = "%s %s %s" %(txtEvol,txtField,strUnit)
-    displayParam['Field'] = field
-    displayParam['title'] = txtTitle
-    displayParam['YaxisLabel'] = txtYaxis
-
-    strDateToday = dt.date.today().strftime("%Y%m%d")
-    Path(figures_path).mkdir(parents=True, exist_ok=True)
-    fname = figures_path + "/%s_evolCovid19_%s_%s_with_without_smooth.png" %(strDateToday,txtEvol,txtField)
-    displayParam['FileName'] = fname.replace(" ","_")
-    displayParam['YScale'] = yscale
+    png_format = "%s_evolCovid19_%s_%s_with_without_smooth.png"
+    file_yscale(displayParam, figures_path, png_format, txtEvol, txtField, yscale, None)
     return displayParam
 
 
