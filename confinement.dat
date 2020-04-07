@@ -1,0 +1,45 @@
+### Date of confinement
+### First row: Country
+### Following pair of rows: type of confinement (T: total or P: partial), Date
+### It is possible to have sequential types of confinement.
+### source: French journal Le Monde (https://www.lemonde.fr/planete/article/2020/04/07/coronavirus-dans-le-monde-aucun-nouveau-deces-en-chine-pour-la-premiere-fois-depuis-le-debut-de-l-epidemie_6035776_3244.html)
+
+France, T, 3/17/2020
+Spain, T, 3/14/2020
+Portugal, T, 3/19/2020
+UK, T, 3/24/2020
+Ireland, P, 3/15/2020, P, 3/24/2020, T, 3/28/2020
+Belgium, T, 3/18/2020
+Norway, P, 3/12/2020
+Italy, T, 3/9/2020
+Germany, P, 
+Austria, T, 3/15/2020
+Czech, T, 3/13/2020
+Mexico, T, 3/30/2020
+Romania, T, 3/25/2020
+Greece, T, 3/23/2020
+Ukraine, T, 3/17/2020
+Maroco, T, 3/21/2020
+Cuba, T, 3/24/2020
+Venezuela, T, 3/17/2020
+Columbia, T, 3/24/2020
+Peru, T, 3/16/2020
+Bolivia, T, 3/22/2020
+Argentina, T, 3/19/2020
+Tunisia, T, 3/20/2020
+Angola, T, 3/28/2020
+Botswana, T, 3/22/2020
+South Africa, T, 3/27/2020
+Lesotho, T, 3/28/2020
+Zimbabwe, T, 3/30/2020
+Ouganfa, T, 3/30/2020
+Kenya, T, 3/23/2020
+United Arab Emirates, T, 3/31/2020
+Irak, T, 3/22/2020
+India, T, 3/24/2020
+Nepal, T, 3/24/2020
+Bangladesh, T, 3/26/2020
+Malaysia, T, 3/28/2020
+Laos, T, 3/30/2020
+Vietnam, T, 4/1/2020
+New Zealand, T, 3/23/2020
