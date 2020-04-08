@@ -1,7 +1,11 @@
+import datetime
+from pathlib import Path
+
 import numpy as np
 import pandas as pd
 import datetime as dt
 from scipy.signal import savgol_filter
+
 
 def loadData(path,field,evolutionType,vSmoothing,startDate=dt.date(2020, 1,1)):
     dataParam = {}
@@ -27,6 +31,7 @@ def loadData(path,field,evolutionType,vSmoothing,startDate=dt.date(2020, 1,1)):
 
     return dataParam
 
+
 def evolution_single(strCountry,data):
 
     size=len(data.iloc[0].values[4:])
@@ -45,6 +50,7 @@ def evolution_single(strCountry,data):
             evolution[:] += locRegion.astype(int)
 
     return evolution
+
 
 def evolution_country(strCountry,dataParam,displayParam):
 
@@ -88,8 +94,11 @@ def evolution_country(strCountry,dataParam,displayParam):
 
     return evol
 
+
 def dateOut(date):
     return date.strftime('%m/%d/%y').lstrip("0").replace("/0", "/")
+
+
 def dateIn(strDate):
     spl = strDate.split('/')
     month = int(spl[0])
@@ -97,3 +106,63 @@ def dateIn(strDate):
     year = int("20%s" %spl[2])
     return dt.date(year, month,day)
 
+
+def setFitExtraParam(field, fittingPeriod, extrapolPeriod,dataParam,iExtrapol):
+    if field=="Confirmed":
+        return [fittingPeriod, 14, iExtrapol]
+    elif field=="Deaths":
+        return [fittingPeriod, 21, iExtrapol]
+    elif field=="Active":
+        return [fittingPeriod, 21, iExtrapol]
+    elif field=="DeathRate":
+        return [fittingPeriod, 21, iExtrapol]
+
+
+def unit_and_field(field):
+    strUnit = "[-]"
+    if field == "Confirmed":
+        txtField = "confirmed cases"
+    elif field == "Deaths":
+        txtField = "deaths"
+    elif field == "Active":
+        txtField = "active cases"
+    elif field == "DeathRate":
+        txtField = "death rate"
+        strUnit = "[%]"
+    return strUnit, txtField
+
+
+def txt_evol(evolutionType):
+    if evolutionType == 'cumulative':
+        txtEvol = "Cumulative"
+    elif evolutionType == 'daily':
+        txtEvol = 'Daily'
+    elif evolutionType == 'curvature':
+        txtEvol = 'Derivative of daily'
+    elif evolutionType == 'smoothedCurvature':
+        txtEvol = 'Derivative of smoothed daily'
+    elif evolutionType == 'R0':
+        txtEvol = 'R0 from'
+    return txtEvol
+
+
+def title_and_y_axis(displayParam, field, strUnit, txtEvol, txtField,
+                     txt_title_format):
+    txtTitle = txt_title_format % (txtEvol, txtField)
+    txtYaxis = "%s %s %s" % (txtEvol, txtField, strUnit)
+    displayParam['Field'] = field
+    displayParam['title'] = txtTitle
+    displayParam['YaxisLabel'] = txtYaxis
+
+
+def file_yscale(displayParam, figures_path, png_format, txtEvol, txtField, yscale, zone):
+    strDateToday = dt.date.today().strftime("%Y%m%d")
+    Path(figures_path).mkdir(parents=True, exist_ok=True)
+    if zone:
+        fname = figures_path + "/" + png_format % (
+        strDateToday, txtEvol, txtField, zone)
+    else:
+        fname = figures_path + "/" + png_format % (
+            strDateToday, txtEvol, txtField)
+    displayParam['FileName'] = fname.replace(" ", "_")
+    displayParam['YScale'] = yscale

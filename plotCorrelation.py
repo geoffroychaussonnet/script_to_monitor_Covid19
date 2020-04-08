@@ -3,12 +3,7 @@
 # Source of the data: https://github.com/CSSEGISandData/COVID-19
 
 from pylab import *
-import pandas as pd
-import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
-import datetime as dt
-from scipy.signal import savgol_filter
-from pathlib import Path
 from covid_utils import *
 
 ############### Basic use #############################
@@ -22,6 +17,8 @@ from covid_utils import *
 
 ################ Parameters to define manually (BEGIN) ######################
 # Path to the folder containing the time series:
+from covid_utils import file_yscale
+
 path="https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/"
 figures_path = "../FIGURES"
 daysInterval = 7   # To set Major x-axis
@@ -94,14 +91,6 @@ def get_trend(dates,evol1,fitParam,extParam):
 
     return xcorrel1, correl1, strRate
 
-def dateOut(date):
-    return date.strftime('%m/%d/%y').lstrip("0").replace("/0", "/")
-def dateIn(strDate):
-    spl = strDate.split('/')
-    month = int(spl[0])
-    day = int(spl[1])
-    year = int("20%s" %spl[2])
-    return datetime.date(year, month,day)
 
 def plot_country(strCountry,dataParam,displayParam,fitParam,quarParam,ax):
     print("########## Treating country: %12s ###########" %strCountry)
@@ -166,50 +155,17 @@ def plot_country(strCountry,dataParam,displayParam,fitParam,quarParam,ax):
 def setDisplayParam(field,evolutionType,yscale,zone):
     displayParam = {}
 
-    strUnit = "[-]"
-    if field=="Confirmed":
-        txtField = "confirmed cases"
-    elif field=="Deaths":
-        txtField = "deaths"
-    elif field=="Active":
-        txtField = "active cases"
-    elif field=="DeathRate":
-        txtField = "death rate"
-        strUnit = "[%]"
+    strUnit, txtField = unit_and_field(field)
+    txtEvol = txt_evol(evolutionType)
 
-    if evolutionType == 'cumulative':
-        txtEvol = "Cumulative"
-    elif evolutionType == 'daily':
-        txtEvol = 'Daily'
-    elif evolutionType == 'curvature':
-        txtEvol = 'Derivative of daily'
-    elif evolutionType == 'smoothedCurvature':
-        txtEvol = 'Derivative of smoothed daily'
-    elif evolutionType == 'R0':
-        txtEvol = 'R0 from'
+    txt_title_format = "%s %s\n (Source: Johns Hopkins University)"
+    title_and_y_axis(displayParam, field, strUnit, txtEvol, txtField,
+                     txt_title_format)
 
-    txtTitle = "%s %s\n (Source: Johns Hopkins University)" %(txtEvol,txtField)
-    txtYaxis = "%s %s %s" %(txtEvol,txtField,strUnit)
-    displayParam['Field'] = field
-    displayParam['title'] = txtTitle
-    displayParam['YaxisLabel'] = txtYaxis
-
-    strDateToday = dt.date.today().strftime("%Y%m%d")
-    Path(figures_path).mkdir(parents=True, exist_ok=True)
-    fname = figures_path + "/%s_evolCovid19_%s_%s_for_%s.png" %(strDateToday,txtEvol,txtField,zone)
-    displayParam['FileName'] = fname.replace(" ","_")
-    displayParam['YScale'] = yscale
+    png_format = "%s_evolCovid19_%s_%s_for_%s.png"
+    file_yscale(displayParam, figures_path, png_format, txtEvol, txtField, yscale, zone)
     return displayParam
 
-def setFitExtraParam(fittingPeriod, extrapolPeriod,dataParam,iExtrapol):
-    if field=="Confirmed":
-        return [fittingPeriod, 14, iExtrapol]
-    elif field=="Deaths":
-        return [fittingPeriod, 21, iExtrapol]
-    elif field=="Active":
-        return [fittingPeriod, 21, iExtrapol]
-    elif field=="DeathRate":
-        return [fittingPeriod, 21, iExtrapol]
 
 ######################## Definition of Functions (END) ############################
 
@@ -219,7 +175,7 @@ def setFitExtraParam(fittingPeriod, extrapolPeriod,dataParam,iExtrapol):
 # Initialisation
 dataParam = loadData(path,field,evolutionType,vSmoothing,startDate=startDate)
 displayParam = setDisplayParam(field,evolutionType,yscale,zone)
-fitParam = setFitExtraParam(fittingPeriod, extrapolPeriod,dataParam,iExtrapol)
+fitParam = setFitExtraParam(field,fittingPeriod, extrapolPeriod,dataParam,iExtrapol)
 
 # Set graphic objects
 close(1)

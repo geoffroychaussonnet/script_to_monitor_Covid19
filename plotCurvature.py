@@ -1,12 +1,8 @@
 # Author: Geoffroy Chaussonnet
 
 from pylab import *
-import pandas as pd
-import matplotlib.pyplot as plt
-import matplotlib.ticker as ticker
-import datetime as dt
-from scipy.signal import savgol_filter
 from pathlib import Path
+from covid_utils import *
 
 ############### Basic use #############################
 # example: plot_country("France",dataParam,fitParam,'3/17/20',ax)
@@ -19,6 +15,8 @@ from pathlib import Path
 
 ################ Parameters to define manually ######################
 # Path to the folder containing the time series:
+from covid_utils import unit_and_field, txt_evol
+
 path="https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/"
 figures_path = "../FIGURES"
 daysInterval = 7   # To set Major x-axis
@@ -44,44 +42,6 @@ vSmoothing = [7,3]  # [window size,order of fitting polynomial]
 
 
 ######################## Definition of Functions ############################
-
-def evolution_single(strCountry,data):
-    if strCountry == "World":
-        icountry = range(len(data))
-    else:
-        icountry = data[data["Country/Region"]==strCountry].index.values
-    size=len(data.iloc[icountry[0]].values[4:])
-    evolution = zeros(size,dtype=int)
-    for ic in icountry:
-        locRegion = data.iloc[ic].values[4:]
-        locRegion[isnan(locRegion.tolist())] = 0
-        evolution[:] += locRegion.astype(int)
-    return evolution
-
-def evolution_country(strCountry,dataParam):
-
-    if field=="Confirmed":
-        evolution = evolution_single(strCountry,dataParam['Confirmed'])
-    elif field=="Deaths":
-        evolution = evolution_single(strCountry,dataParam['Deaths'])
-    elif field=="Active":
-        evolC = evolution_single(strCountry,dataParam['Confirmed'])
-        evolD = evolution_single(strCountry,dataParam['Deaths'])
-        evolR = evolution_single(strCountry,dataParam['Recovered'])
-        evolution = evolC - evolR - evolD
-    elif field=="DeathRate":
-        evolC = evolution_single(strCountry,dataParam['Confirmed'])
-        evolD = evolution_single(strCountry,dataParam['Deaths'])
-        evolution = evolD/evolC*100
-
-    if dataParam['EvolutionType'] == "cumulative":
-        evol =  evolution[dataParam['FilterDate']]
-    elif dataParam['EvolutionType'] == "daily":
-        dedt = np.zeros(len(evolution))
-        dedt[1:] = (np.roll(evolution,-1) - evolution)[:-1]
-        evol = dedt[dataParam['FilterDate']]
-
-    return evol
 
 def get_trend(dates,evol1,fitParam,extParam):
     dtFitBeg = fitParam[0]
@@ -119,14 +79,6 @@ def get_trend(dates,evol1,fitParam,extParam):
 
     return xcorrel1, correl1, strRate
 
-def dateOut(date):
-    return date.strftime('%m/%d/%y').lstrip("0").replace("/0", "/")
-def dateIn(strDate):
-    spl = strDate.split('/')
-    month = int(spl[0])
-    day = int(spl[1])
-    year = int("20%s" %spl[2])
-    return datetime.date(year, month,day)
 
 def scatter_curvature_vs_X_World(strCountry, dataParam,displayParam,fitParam,quarParam,ax):
     print("########## Treating World #############")
@@ -140,7 +92,7 @@ def scatter_curvature_vs_X_World(strCountry, dataParam,displayParam,fitParam,qua
     for strCountry in dataParam["Confirmed"]["Country/Region"]:
         if strCountry not in lstDoneCountry:
             lstDoneCountry.append(strCountry)
-            evol1 = evolution_country(strCountry,dataParam)
+            evol1 = evolution_country(strCountry,dataParam,displayParam)
             matCountry.append(evol1)
 
     periodX = []
@@ -196,7 +148,7 @@ def plot_curvature_vs_gradient(strCountry,dataParam,displayParam,fitParam,quarPa
     for strCountry in dataParam["Confirmed"]["Country/Region"]:
         if strCountry not in lstDoneCountry:
             lstDoneCountry.append(strCountry)
-            evol1 = evolution_country(strCountry,dataParam)
+            evol1 = evolution_country(strCountry,dataParam,displayParam)
             matCountry.append(evol1)
 
     periodX = []
@@ -248,7 +200,7 @@ def plot_country(strCountry,dataParam,displayParam,fitParam,quarParam,ax):
     iExtrapol = fitParam[2]
 
     # Extract evolution for this country
-    evol1 = evolution_country(strCountry,dataParam)
+    evol1 = evolution_country(strCountry,dataParam,displayParam)
 
     # find the quarantine date 
     iQuar = np.where(dataParam['Dates']>=dateIn(quarDate))
@@ -303,74 +255,23 @@ def plot_country(strCountry,dataParam,displayParam,fitParam,quarParam,ax):
 def setDisplayParam(field,evolutionType,yscale):
     displayParam = {}
 
-    strUnit = "[-]"
-    if field=="Confirmed":
-        txtField = "confirmed cases"
-    elif field=="Deaths":
-        txtField = "deaths"
-    elif field=="Active":
-        txtField = "active cases"
-    elif field=="DeathRate":
-        txtField = "death rate"
-        strUnit = "[%]"
+    strUnit, txtField = unit_and_field(field)
+    txtEvol = txt_evol(evolutionType)
 
-    if evolutionType == 'cumulative':
-        txtEvol = "Cumulative"
-    elif evolutionType == 'daily':
-        txtEvol = 'Daily'
+    txt_title_format = "%s %s in some Western countries\n (Source: Johns Hopkins University)"
+    title_and_y_axis(displayParam, field, strUnit, txtEvol, txtField,
+                     txt_title_format)
 
-    txtTitle = "%s %s in some Western countries\n (Source: Johns Hopkins University)" %(txtEvol,txtField)
-    txtYaxis = "%s %s %s" %(txtEvol,txtField,strUnit)
-    displayParam['title'] = txtTitle
-    displayParam['YaxisLabel'] = txtYaxis
-
-    strDateToday = dt.date.today().strftime("%Y%m%d")
-    Path(figures_path).mkdir(parents=True, exist_ok=True)
-    fname = figures_path + "/%s_Covid19_scatter_curvature_vs_period_%s_%s.png" %(strDateToday,txtEvol,txtField)
-    displayParam['FileName'] = fname.replace(" ","_")
-    displayParam['YScale'] = yscale
+    png_format = "%s_Covid19_scatter_curvature_vs_period_%s_%s.png"
+    file_yscale(displayParam, figures_path, png_format, txtEvol, txtField, yscale, None)
     return displayParam
 
-def loadData(path,field,evolutionType,vSmoothing,startDate=datetime.date(2020, 1,1)):
-    dataParam = {}
-    dataParam['Confirmed'] = pd.read_csv(path+"time_series_covid19_confirmed_global.csv")
-    dataParam['Deaths'] = pd.read_csv(path+"time_series_covid19_deaths_global.csv")
-    dataParam['Recovered'] = pd.read_csv(path+"time_series_covid19_recovered_global.csv")
-    dataParam['Field'] = field
-    dataParam['EvolutionType'] = evolutionType
-    dataParam['Smoothing'] = vSmoothing
-    #dateax = dataParam['Confirmed'].columns[4:].values.astype(str)
-    dateax = dataParam['Deaths'].columns[4:].values.astype(str)
-
-    # Convert date axis to date vector
-    dates = np.array([dt.datetime.strptime(plof,'%m/%d/%y').date() for plof in dateax])
-
-    # Filter axe of dates
-    filterDate = (dates>=startDate)
-    dateax = dateax[filterDate]
-    dates = dates[filterDate]
-
-    dataParam['FilterDate'] = filterDate
-    dataParam['DateAxis'] = dateax
-    dataParam['Dates'] = dates
-
-    return dataParam
-
-def setFitExtraParam(fittingPeriod, extrapolPeriod,dataParam,iExtrapol):
-    if field=="Confirmed":
-        return [fittingPeriod, 14, iExtrapol]
-    elif field=="Deaths":
-        return [fittingPeriod, 21, iExtrapol]
-    elif field=="Active":
-        return [fittingPeriod, 21, iExtrapol]
-    elif field=="DeathRate":
-        return [fittingPeriod, 21, iExtrapol]
 
 ######################## Definition of Functions ############################
 
 dataParam = loadData(path,field,evolutionType,vSmoothing,startDate=startDate)
 displayParam = setDisplayParam(field,evolutionType,yscale)
-fitParam = setFitExtraParam(fittingPeriod, extrapolPeriod,dataParam,iExtrapol)
+fitParam = setFitExtraParam(field,fittingPeriod, extrapolPeriod,dataParam,iExtrapol)
 
 close(1)
 fig = figure(num=1,figsize=(10,6))

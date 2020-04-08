@@ -3,11 +3,6 @@
 # Source of the data: https://github.com/CSSEGISandData/COVID-19
 
 from pylab import *
-import pandas as pd
-import matplotlib.pyplot as plt
-import matplotlib.ticker as ticker
-import datetime as dt
-from scipy.signal import savgol_filter
 from pathlib import Path
 from covid_utils import *
 
@@ -23,6 +18,8 @@ from covid_utils import *
 
 ################ Parameters to define manually (BEGIN) ######################
 # Path to the folder containing the time series:
+from covid_utils import title_and_y_axis
+
 path="https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/"
 figures_path = "../FIGURES"
 startDate = dt.date(2020, 1,1)   # Start date of the plot:
@@ -104,65 +101,17 @@ def plot_phase_country(strCountry,dataParam,displayParam,fitParam,quarParam,ax):
 def setDisplayParam(field,evolutionType,yscale,zone):
     displayParam = {}
 
-    strUnit = "[-]"
-    if field=="Confirmed":
-        txtField = "confirmed cases"
-    elif field=="Deaths":
-        txtField = "deaths"
-    elif field=="Active":
-        txtField = "active cases"
-    elif field=="DeathRate":
-        txtField = "death rate"
-        strUnit = "[%]"
-
+    strUnit, txtField = unit_and_field(field)
     txtEvol = "Phase portrait from"
 
-    txtTitle = "%s %s\n (Source: Johns Hopkins University)" %(txtEvol,txtField)
-    txtYaxis = "%s %s %s" %(txtEvol,txtField,strUnit)
-    displayParam['Field'] = field
-    displayParam['title'] = txtTitle
-    displayParam['YaxisLabel'] = txtYaxis
+    txt_title_format = "%s %s\n (Source: Johns Hopkins University)"
+    title_and_y_axis(displayParam, field, strUnit, txtEvol, txtField,
+                     txt_title_format)
 
-    strDateToday = dt.date.today().strftime("%Y%m%d")
-    Path(figures_path).mkdir(parents=True, exist_ok=True)
-    fname = figures_path+"/%s_phase_diagram_Covid19_%s_%s_for_%s.png" %(strDateToday,txtEvol,txtField,zone)
-    displayParam['FileName'] = fname.replace(" ","_")
-    displayParam['YScale'] = yscale
+    png_format = "%s_phase_diagram_Covid19_%s_%s_for_%s.png"
+    file_yscale(displayParam, figures_path, png_format, txtEvol, txtField, yscale, zone)
     return displayParam
 
-def loadData(path,field,evolutionType,vSmoothing,startDate=dt.date(2020, 1,1)):
-    dataParam = {}
-    dataParam['Confirmed'] = pd.read_csv(path+"time_series_covid19_confirmed_global.csv")
-    dataParam['Deaths'] = pd.read_csv(path+"time_series_covid19_deaths_global.csv")
-    dataParam['Recovered'] = pd.read_csv(path+"time_series_covid19_recovered_global.csv")
-    dataParam['Field'] = field
-    dataParam['EvolutionType'] = evolutionType
-    dataParam['Smoothing'] = vSmoothing
-    dateax = dataParam['Deaths'].columns[4:].values.astype(str)
-
-    # Convert date axis to date vector
-    dates = np.array([dt.datetime.strptime(plof,'%m/%d/%y').date() for plof in dateax])
-
-    # Filter axe of dates
-    filterDate = (dates>=startDate)
-    dateax = dateax[filterDate]
-    dates = dates[filterDate]
-
-    dataParam['FilterDate'] = filterDate
-    dataParam['DateAxis'] = dateax
-    dataParam['Dates'] = dates
-
-    return dataParam
-
-def setFitExtraParam(fittingPeriod, extrapolPeriod,dataParam,iExtrapol):
-    if field=="Confirmed":
-        return [fittingPeriod, 14, iExtrapol]
-    elif field=="Deaths":
-        return [fittingPeriod, 21, iExtrapol]
-    elif field=="Active":
-        return [fittingPeriod, 21, iExtrapol]
-    elif field=="DeathRate":
-        return [fittingPeriod, 21, iExtrapol]
 
 ######################## Definition of Functions (END) ############################
 
@@ -172,7 +121,7 @@ def setFitExtraParam(fittingPeriod, extrapolPeriod,dataParam,iExtrapol):
 # Initialisation
 dataParam = loadData(path,field,evolutionType,vSmoothing,startDate=startDate)
 displayParam = setDisplayParam(field,evolutionType,yscale,zone)
-fitParam = setFitExtraParam(fittingPeriod, extrapolPeriod,dataParam,iExtrapol)
+fitParam = setFitExtraParam(field,fittingPeriod, extrapolPeriod,dataParam,iExtrapol)
 
 # Set graphic objects
 close(1)

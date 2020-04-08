@@ -7,6 +7,7 @@ import matplotlib.ticker as ticker
 import datetime as dt
 from scipy.signal import savgol_filter
 from pathlib import Path
+from covid_utils import *
 
 ############### Basic use #############################
 # example: plot_country("France",dataParam,fitParam,'3/17/20',ax)
@@ -48,71 +49,6 @@ vSmoothing = [5,3]  # [window size,order of fitting polynomial]
 
 ######################## Definition of Functions ############################
 
-def evolution_single(strCountry,data):
-
-    size=len(data.iloc[0].values[4:])
-    evolution = zeros(size,dtype=int)
-
-    lstCountry = [strCountry]
-    if strCountry == "EUW":
-        lstCountry = ["France", "Germany", "Spain", "Italy", "Netherlands", "Portugal", "Belgium", "Sweden", "Finland", "Greece", "Ireland", "United Kingdom", "Norway","Switzerland", "Poland", "Andorra","Luxembourg", "Liechtenstein", "Malta", "San Marino", "Holy See","Monaco"]
-    elif strCountry == "EU":
-        lstCountry = ["France", "Germany", "Spain", "Italy", "Netherlands", "Portugal", "Belgium", "Sweden", "Finland", "Greece", "Ireland", "United Kingdom", "Norway","Switzerland", "Poland", "Andorra","Luxembourg", "Liechtenstein", "Malta", "San Marino", "Holy See","Monaco","Hungary", "Czechia","Slovakia", "Slovenia", "Croatia","Bosnia and Herzegovina", "Serbia", "Albania", "Romania", "Bulgaria", "Ukraine", "Belarus", "Latvia", "Estonia", "Lithuania","Moldova","North Macedonia", "Kosovo","Montenegro","Iceland","Cyprus"]
-
-    for ic,cntry in enumerate(data['Country/Region']):
-        if (cntry in lstCountry) or (strCountry=="World"):
-            locRegion = data.iloc[ic].values[4:]
-            locRegion[isnan(locRegion.tolist())] = 0
-            evolution[:] += locRegion.astype(int)
-
-    return evolution
-
-def evolution_country(strCountry,dataParam):
-
-    if field=="Confirmed":
-        evolution = evolution_single(strCountry,dataParam['Confirmed'])
-    elif field=="Deaths":
-        evolution = evolution_single(strCountry,dataParam['Deaths'])
-    elif field=="Active":
-        evolC = evolution_single(strCountry,dataParam['Confirmed'])
-        evolD = evolution_single(strCountry,dataParam['Deaths'])
-        evolR = evolution_single(strCountry,dataParam['Recovered'])
-        evolution = evolC - evolR - evolD
-    elif field=="DeathRate":
-        evolC = evolution_single(strCountry,dataParam['Confirmed'])
-        evolD = evolution_single(strCountry,dataParam['Deaths'])
-        evolution = evolD/evolC*100
-
-    if dataParam['EvolutionType'] == "cumulative":
-        evol =  evolution[dataParam['FilterDate']]
-    elif dataParam['EvolutionType'] == "daily":
-        dedt = np.zeros(len(evolution))
-        dedt[1:] = np.diff(evolution)
-        evol = dedt[dataParam['FilterDate']]
-    elif dataParam['EvolutionType'] == "curvature":
-        d2edt2 = np.zeros(len(evolution))
-        d2edt2[2:] = np.diff(evolution,2)
-        evol = d2edt2[dataParam['FilterDate']]
-    elif dataParam['EvolutionType'] == "smoothedCurvature":
-        #dedt = np.zeros(len(evolution))
-        #dedt[1:] = np.diff(evolution)
-        dedt = np.diff(evolution)
-        evol = savgol_filter(dedt, dataParam['Smoothing'][0], dataParam['Smoothing'][1]) # arg2: window size; arg3:  polynomial order 
-        d2edt2 = np.zeros(len(evolution))
-        d2edt2[2:] = np.diff(evol)/evol[-1]
-        evol = d2edt2[dataParam['FilterDate']]
-    elif dataParam['EvolutionType'] == "R0":
-        R0 = np.zeros(len(evolution))
-        delta0 = np.diff(evolution)
-        delta = savgol_filter(delta0, dataParam['Smoothing'][0], dataParam['Smoothing'][1]) # arg2: window size; arg3:  polynomial order 
-        R0[1:] = delta/np.roll(delta,5)
-        ## TEST:
-        #print((delta/np.roll(delta,5))[-10:])
-        #print((delta*5/np.roll(delta,1))[-10:])
-        evol = R0[dataParam['FilterDate']]
-
-    return evol
-
 def get_trend(dates,evol1,fitParam,extParam):
     dtFitBeg = fitParam[0]
     dtFitEnd = fitParam[1]
@@ -149,14 +85,6 @@ def get_trend(dates,evol1,fitParam,extParam):
 
     return xcorrel1, correl1, strRate
 
-def dateOut(date):
-    return date.strftime('%m/%d/%y').lstrip("0").replace("/0", "/")
-def dateIn(strDate):
-    spl = strDate.split('/')
-    month = int(spl[0])
-    day = int(spl[1])
-    year = int("20%s" %spl[2])
-    return datetime.date(year, month,day)
 
 def plot_country(strCountry,dataParam,displayParam,fitParam,quarParam,ax):
     print("########## Treating country: %12s ###########" %strCountry)
@@ -166,7 +94,7 @@ def plot_country(strCountry,dataParam,displayParam,fitParam,quarParam,ax):
     iExtrapol = fitParam[2]
 
     # Extract evolution for this country
-    evol1 = evolution_country(strCountry,dataParam)
+    evol1 = evolution_country(strCountry,dataParam,displayParam)
 
     # find the quarantine date 
     iQuar = np.where(dataParam['Dates']>=dateIn(quarDate))
@@ -227,80 +155,23 @@ def plot_country(strCountry,dataParam,displayParam,fitParam,quarParam,ax):
 def setDisplayParam(field,evolutionType,yscale):
     displayParam = {}
 
-    strUnit = "[-]"
-    if field=="Confirmed":
-        txtField = "confirmed cases"
-    elif field=="Deaths":
-        txtField = "deaths"
-    elif field=="Active":
-        txtField = "active cases"
-    elif field=="DeathRate":
-        txtField = "death rate"
-        strUnit = "[%]"
+    strUnit, txtField = unit_and_field(field)
+    txtEvol = txt_evol(evolutionType)
 
-    if evolutionType == 'cumulative':
-        txtEvol = "Cumulative"
-    elif evolutionType == 'daily':
-        txtEvol = 'Daily'
-    elif evolutionType == 'curvature':
-        txtEvol = 'Derivative of daily'
-    elif evolutionType == 'smoothedCurvature':
-        txtEvol = 'Derivative of smoothed daily'
-    elif evolutionType == 'R0':
-        txtEvol = 'R0 from'
+    txt_title_format = "%s %s in some Western countries\n (Source: Johns Hopkins University)"
+    title_and_y_axis(displayParam, field, strUnit, txtEvol, txtField,
+                     txt_title_format)
 
-    txtTitle = "%s %s in some Western countries\n (Source: Johns Hopkins University)" %(txtEvol,txtField)
-    txtYaxis = "%s %s %s" %(txtEvol,txtField,strUnit)
-    displayParam['title'] = txtTitle
-    displayParam['YaxisLabel'] = txtYaxis
-
-    strDateToday = dt.date.today().strftime("%Y%m%d")
-    Path(figures_path).mkdir(parents=True, exist_ok=True)
-    fname = figures_path + "/%s_evolCovid19_%s_%s_with_without_smooth.png" %(strDateToday,txtEvol,txtField)
-    displayParam['FileName'] = fname.replace(" ","_")
-    displayParam['YScale'] = yscale
+    png_format = "%s_evolCovid19_%s_%s_with_without_smooth.png"
+    file_yscale(displayParam, figures_path, png_format, txtEvol, txtField, yscale, None)
     return displayParam
 
-def loadData(path,field,evolutionType,vSmoothing,startDate=datetime.date(2020, 1,1)):
-    dataParam = {}
-    dataParam['Confirmed'] = pd.read_csv(path+"time_series_covid19_confirmed_global.csv")
-    dataParam['Deaths'] = pd.read_csv(path+"time_series_covid19_deaths_global.csv")
-    dataParam['Recovered'] = pd.read_csv(path+"time_series_covid19_recovered_global.csv")
-    dataParam['Field'] = field
-    dataParam['EvolutionType'] = evolutionType
-    dataParam['Smoothing'] = vSmoothing
-    #dateax = dataParam['Confirmed'].columns[4:].values.astype(str)
-    dateax = dataParam['Deaths'].columns[4:].values.astype(str)
-
-    # Convert date axis to date vector
-    dates = np.array([dt.datetime.strptime(plof,'%m/%d/%y').date() for plof in dateax])
-
-    # Filter axe of dates
-    filterDate = (dates>=startDate)
-    dateax = dateax[filterDate]
-    dates = dates[filterDate]
-
-    dataParam['FilterDate'] = filterDate
-    dataParam['DateAxis'] = dateax
-    dataParam['Dates'] = dates
-
-    return dataParam
-
-def setFitExtraParam(fittingPeriod, extrapolPeriod,dataParam,iExtrapol):
-    if field=="Confirmed":
-        return [fittingPeriod, 14, iExtrapol]
-    elif field=="Deaths":
-        return [fittingPeriod, 21, iExtrapol]
-    elif field=="Active":
-        return [fittingPeriod, 21, iExtrapol]
-    elif field=="DeathRate":
-        return [fittingPeriod, 21, iExtrapol]
 
 ######################## Definition of Functions ############################
 
 dataParam = loadData(path,field,evolutionType,vSmoothing,startDate=startDate)
 displayParam = setDisplayParam(field,evolutionType,yscale)
-fitParam = setFitExtraParam(fittingPeriod, extrapolPeriod,dataParam,iExtrapol)
+fitParam = setFitExtraParam(field,fittingPeriod, extrapolPeriod,dataParam,iExtrapol)
 
 close(1)
 fig = figure(num=1,figsize=(10,6))
