@@ -15,6 +15,7 @@ def loadData(path,field,evolutionType,vSmoothing,startDate=dt.date(2020, 1,1)):
     dataParam['Field'] = field
     dataParam['EvolutionType'] = evolutionType
     dataParam['Smoothing'] = vSmoothing
+    dataParam['Countries'] = set(dataParam['Confirmed']['Country/Region'])
     dateax = dataParam['Deaths'].columns[4:].values.astype(str)
 
     # Convert date axis to date vector
