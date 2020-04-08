@@ -1,4 +1,5 @@
 import datetime
+import sys
 from pathlib import Path
 
 import numpy as np
@@ -194,7 +195,12 @@ def parse_confinement(file):
         country, *tds = row.split(",")
         for t, d in zip(tds[::2], tds[1::2]):
             t = t.strip()
-            d = dateIn(d)
-            quar_dates_by_type_by_country.setdefault(
-                country, {}).setdefault(t, []).append(d)
+            try:
+                d = dateIn(d)
+            except ValueError:
+                print("Ignore row: {}".format(row), file=sys.stderr)
+            else:
+                quar_dates_by_type_by_country.setdefault(
+                    country, {}).setdefault(t, []).append(d)
+
     return quar_dates_by_type_by_country
