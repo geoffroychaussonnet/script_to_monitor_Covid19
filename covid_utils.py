@@ -1,4 +1,5 @@
 import datetime
+import sys
 from pathlib import Path
 
 import numpy as np
@@ -15,6 +16,7 @@ def loadData(path,field,evolutionType,vSmoothing,startDate=dt.date(2020, 1,1)):
     dataParam['Field'] = field
     dataParam['EvolutionType'] = evolutionType
     dataParam['Smoothing'] = vSmoothing
+    dataParam['Countries'] = set(dataParam['Confirmed']['Country/Region'])
     dateax = dataParam['Deaths'].columns[4:].values.astype(str)
 
     # Convert date axis to date vector
@@ -99,12 +101,20 @@ def dateOut(date):
     return date.strftime('%m/%d/%y').lstrip("0").replace("/0", "/")
 
 
-def dateIn(strDate):
-    spl = strDate.split('/')
-    month = int(spl[0])
-    day = int(spl[1])
-    year = int("20%s" %spl[2])
-    return dt.date(year, month,day)
+def dateIn(str_date):
+    """
+    >>> dateIn("3/7/20")
+    datetime.date(2020, 3, 7)
+    >>> dateIn("3/7/2020")
+    datetime.date(2020, 3, 7)
+
+    :param str_date: date as M/D/Y
+    :return: a datetime.date object
+    """
+    month, day, year = map(int, str_date.split('/'))
+    if year < 100:
+        year += 2000
+    return dt.date(year, month, day)
 
 
 def setFitExtraParam(field, fittingPeriod, extrapolPeriod,dataParam,iExtrapol):
@@ -166,3 +176,31 @@ def file_yscale(displayParam, figures_path, png_format, txtEvol, txtField, yscal
             strDateToday, txtEvol, txtField)
     displayParam['FileName'] = fname.replace(" ", "_")
     displayParam['YScale'] = yscale
+
+
+def parse_confinement(file):
+    """
+    Parse the confinement.dat file.
+
+    :param file: a file like object, lines are:
+                 country, type, date[, type, date, ...]
+    :return: a mapping country -> type -> list of dates
+    """
+    quar_dates_by_type_by_country = {}
+    for row in file:
+        row = row.strip()
+        if not row or row[0] == '#':
+            continue
+
+        country, *tds = row.split(",")
+        for t, d in zip(tds[::2], tds[1::2]):
+            t = t.strip()
+            try:
+                d = dateIn(d)
+            except ValueError:
+                print("Ignore row: {}".format(row), file=sys.stderr)
+            else:
+                quar_dates_by_type_by_country.setdefault(
+                    country, {}).setdefault(t, []).append(d)
+
+    return quar_dates_by_type_by_country
