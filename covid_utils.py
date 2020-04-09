@@ -206,3 +206,17 @@ def parse_confinement(file):
                     country, {}).setdefault(t, []).append(d)
 
     return quar_dates_by_type_by_country
+
+
+# temporary data
+quar_date_by_area = {"World": '3/22/21', "EU": '3/22/21', "China": '1/22/22',
+                     "US": '3/22/20', "European continent": '3/22/21',
+                     "Italy": '3/9/20', "Spain": '3/14/20',
+                     "Germany": '3/19/20', "France": '3/17/20',
+                     "Iran": '8/17/20', "Korea, South": '5/22/20',
+                     "Japan": '5/22/20', "Switzerland": '5/22/20',
+                     "United Kingdom": '3/22/20', "Denmark": '3/13/20',
+                     "Norway": '3/12/20', "Sweden": '3/28/20',
+                     "Finland": '3/19/20', "Canada": '5/22/20',
+                     "Belgium": '3/18/20', "Ireland": '3/28/20',
+                     }
