@@ -16,6 +16,8 @@ def loadData(path,field,evolutionType,vSmoothing,startDate=dt.date(2020, 1,1)):
     dataParam['EvolutionType'] = evolutionType
     dataParam['Smoothing'] = vSmoothing
     dataParam['Countries'] = set(dataParam['Confirmed']['Country/Region'])
+    with Path("confinement.dat").open() as f:
+        dataParam['Confinement'] = parse_confinement(f)
     dateax = dataParam['Deaths'].columns[4:].values.astype(str)
 
     # Convert date axis to date vector
@@ -206,6 +208,28 @@ def parse_confinement(file):
                     country, {}).setdefault(t, []).append(d)
 
     return quar_dates_by_type_by_country
+
+
+def extract_confinement(quar_dates_by_type_by_country,
+                        future=dt.date(2099, 1, 1)):
+    """
+    Extract the last partial confinement, or the first total confinement,
+    or a date in the future
+
+    :param quar_dates_by_type_by_country: a mapping `country -> type -> [date]`
+    :return: a mapping `country -> date`.
+    """
+    def first_confinement(q_by_t):
+        if 'T' in q_by_t:
+            d = min(q_by_t['T'], default=future)
+        elif 'P' in q_by_t:
+            d = max(q_by_t['P'], default=future)
+        else:
+            d = future
+        return dateOut(d)
+
+    return {c: first_confinement(q_by_t)
+            for c, q_by_t in quar_dates_by_type_by_country.items()}
 
 
 # temporary data
