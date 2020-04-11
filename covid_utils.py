@@ -17,7 +17,7 @@ def loadData(path,field,evolutionType,vSmoothing,startDate=dt.date(2020, 1,1)):
     dataParam['Smoothing'] = vSmoothing
     dataParam['Countries'] = set(dataParam['Confirmed']['Country/Region'])
     with Path("confinement.dat").open() as f:
-        dataParam['Confinement'] = parse_confinement(f)
+        dataParam['Confinement'] = extract_confinement(parse_confinement(f))
     dateax = dataParam['Deaths'].columns[4:].values.astype(str)
 
     # Convert date axis to date vector

@@ -177,31 +177,16 @@ def main():
     fig = figure(num=1,figsize=(10,6))
     ax = fig.add_subplot(111)
 
-    #plot_country("World",dataParam,displayParam,fitParam,'3/22/21',ax)
     if zone == "continents":
-        plot_country("EU",dataParam,displayParam,fitParam,'3/22/21',ax)
-        #plot_country("European continent",dataParam,displayParam,fitParam,'3/22/21',ax)
-        plot_country("China",dataParam,displayParam,fitParam,'1/22/22',ax)
-        plot_country("US",dataParam,displayParam,fitParam,'3/22/20',ax)
+        areas = ["EU", "China", "US"]
     elif zone == "countries":
-        #plot_country("China",dataParam,displayParam,fitParam,'1/22/22',ax)
-        plot_country("US",dataParam,displayParam,fitParam,'3/22/20',ax)
-        plot_country("Italy",dataParam,displayParam,fitParam,'3/9/20',ax)
-        plot_country("Spain",dataParam,displayParam,fitParam,'3/14/20',ax)
-        plot_country("Germany",dataParam,displayParam,fitParam,'3/19/20',ax)
-        plot_country("France",dataParam,displayParam,fitParam,'3/17/20',ax)
-        #plot_country("Iran",dataParam,displayParam,fitParam,'8/17/20',ax)
-        #plot_country("Korea, South",dataParam,displayParam,fitParam,'5/22/20',ax)
-        #plot_country("Japan",dataParam,displayParam,fitParam,'5/22/20',ax)
-        #plot_country("Switzerland",dataParam,displayParam,fitParam,'5/22/20',ax)
-        #plot_country("United Kingdom",dataParam,displayParam,fitParam,'3/22/20',ax)
-        #plot_country("Denmark",dataParam,displayParam,fitParam,'3/13/20',ax)
-        #plot_country("Norway",dataParam,displayParam,fitParam,'3/12/20',ax)
-        #plot_country("Sweden",dataParam,displayParam,fitParam,'3/28/20',ax)
-        #plot_country("Finland",dataParam,displayParam,fitParam,'3/19/20',ax)
-        #plot_country("Canada",dataParam,displayParam,fitParam,'5/22/20',ax)
-        #plot_country("Belgium",dataParam,displayParam,fitParam,'3/18/20',ax)
-        #plot_country("Ireland",dataParam,displayParam,fitParam,'3/28/20',ax)
+        areas = ["US", "Italy", "Spain", "Germany", "France"]
+    else:
+        areas = ["World"]
+
+    for area in areas:
+        quar_date = dataParam['Confinement'].get(area, '1/1/99')
+        plot_country(area, dataParam, displayParam, fitParam, quar_date, ax)
 
     # Add graph decorations
     if dataParam['EvolutionType'] == "R0": ax.axhline(1)
@@ -218,6 +203,7 @@ def main():
     fig.tight_layout()
     savefig(displayParam['FileName'],dpi=600,bbox='tight')
     show()
+
 
 if __name__ == "__main__":
     main()
