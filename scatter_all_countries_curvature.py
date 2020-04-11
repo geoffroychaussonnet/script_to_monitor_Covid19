@@ -3,6 +3,7 @@
 from pylab import *
 from pathlib import Path
 from covid_utils import *
+from covid_utils import unit_and_field, txt_evol
 
 ############### Basic use #############################
 # example: plot_country("France",dataParam,fitParam,'3/17/20',ax)
@@ -13,32 +14,6 @@ from covid_utils import *
 # Argument 5: axis (matplotlib object) where to plot the curves
 
 
-################ Parameters to define manually ######################
-# Path to the folder containing the time series:
-from covid_utils import unit_and_field, txt_evol
-
-path="https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/"
-figures_path = "../FIGURES"
-daysInterval = 7   # To set Major x-axis
-startDate = datetime.date(2020, 2,22)   # Start date of the plot:
-extrapolPeriod = 14     # How many days to extrapolate?
-fittingPeriod = 8       # On how long do we fit the data?
-
-#yscale = 'linear'
-yscale = 'log'
-
-field = "Confirmed"
-#field = "Deaths"
-#field = "Active"
-#field = "DeathRate"
-
-evolutionType = "cumulative"
-#evolutionType = "daily"
-
-iExtrapol = 0
-
-vSmoothing = [7,3]  # [window size,order of fitting polynomial]
-################ Parameters to define manually ######################
 
 
 ######################## Definition of Functions ############################
@@ -252,7 +227,7 @@ def plot_country(strCountry,dataParam,displayParam,fitParam,quarParam,ax):
         ax.semilogy(xextrapol,yextrapol,ls='-',lw=2.0,c=col)
         ax.annotate(strRate, xy=(xextrapol[-1],yextrapol[-1]), xytext=(3, 3), textcoords="offset points", ha='center', va='bottom',color=col,weight='bold')
 
-def setDisplayParam(field,evolutionType,yscale):
+def setDisplayParam(field,evolutionType,yscale,figures_path):
     displayParam = {}
 
     strUnit, txtField = unit_and_field(field)
@@ -269,27 +244,55 @@ def setDisplayParam(field,evolutionType,yscale):
 
 ######################## Definition of Functions ############################
 
-dataParam = loadData(path,field,evolutionType,vSmoothing,startDate=startDate)
-displayParam = setDisplayParam(field,evolutionType,yscale)
-fitParam = setFitExtraParam(field,fittingPeriod, extrapolPeriod,dataParam,iExtrapol)
+def main():
+    ################ Parameters to define manually ######################
+    # Path to the folder containing the time series:
+    path="https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/"
+    figures_path = "../FIGURES"
+    daysInterval = 7   # To set Major x-axis
+    startDate = datetime.date(2020, 2,22)   # Start date of the plot:
+    extrapolPeriod = 14     # How many days to extrapolate?
+    fittingPeriod = 8       # On how long do we fit the data?
 
-close(1)
-fig = figure(num=1,figsize=(10,6))
-ax = fig.add_subplot(111)
+    #yscale = 'linear'
+    yscale = 'log'
 
-scatter_curvature_vs_X_World("World",dataParam,displayParam,fitParam,'3/22/21',ax)
+    field = "Confirmed"
+    #field = "Deaths"
+    #field = "Active"
+    #field = "DeathRate"
 
-#ax.set_title(displayParam['title'])
-ax.set_xscale(displayParam['YScale'])
-ax.set_yscale(displayParam['YScale'])
-#ax.set_xlabel("Date")
-#ax.xaxis.set_major_locator(ticker.MultipleLocator(daysInterval))
-#ax.xaxis.set_minor_locator(ticker.MultipleLocator(1))
-#ax.set_ylabel(displayParam['YaxisLabel'])
-#ax.legend(loc=2)
-ax.grid(which='major',color='grey', linestyle='-', linewidth=1, zorder=-1)
-ax.grid(which='minor',color='grey', linestyle='-', linewidth=0.5,zorder=-1)
+    evolutionType = "cumulative"
+    #evolutionType = "daily"
 
-#fig.tight_layout()
-savefig(displayParam['FileName'],dpi=600,bbox='tight')
-show()
+    iExtrapol = 0
+
+    vSmoothing = [7,3]  # [window size,order of fitting polynomial]
+    ################ Parameters to define manually ######################
+    dataParam = loadData(path,field,evolutionType,vSmoothing,startDate=startDate)
+    displayParam = setDisplayParam(field,evolutionType,yscale,figures_path)
+    fitParam = setFitExtraParam(field,fittingPeriod, extrapolPeriod,dataParam,iExtrapol)
+
+    close(1)
+    fig = figure(num=1,figsize=(10,6))
+    ax = fig.add_subplot(111)
+
+    scatter_curvature_vs_X_World("World",dataParam,displayParam,fitParam,'3/22/21',ax)
+
+    #ax.set_title(displayParam['title'])
+    ax.set_xscale(displayParam['YScale'])
+    ax.set_yscale(displayParam['YScale'])
+    #ax.set_xlabel("Date")
+    #ax.xaxis.set_major_locator(ticker.MultipleLocator(daysInterval))
+    #ax.xaxis.set_minor_locator(ticker.MultipleLocator(1))
+    #ax.set_ylabel(displayParam['YaxisLabel'])
+    #ax.legend(loc=2)
+    ax.grid(which='major',color='grey', linestyle='-', linewidth=1, zorder=-1)
+    ax.grid(which='minor',color='grey', linestyle='-', linewidth=0.5,zorder=-1)
+
+    #fig.tight_layout()
+    savefig(displayParam['FileName'],dpi=600,bbox='tight')
+    show()
+
+if __name__ == "__main__":
+    main()

@@ -19,39 +19,6 @@ from covid_utils import *
 # Path to the folder containing the time series:
 from covid_utils import file_yscale
 
-path="https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/"
-figures_path = "../FIGURES"
-daysInterval = 7   # To set Major x-axis
-startDate = datetime.date(2020, 3,1)   # Start date of the plot:
-extrapolPeriod = 14     # How many days to extrapolate?
-fittingPeriod = 8       # On how long do we fit the data?
-
-#yscale = 'linear'
-yscale = 'log'
-
-# Type of value to analyse:
-field = "Confirmed"
-#field = "Deaths"
-#field = "Active"
-#field = "DeathRate"
-
-# Type of evolution:
-#evolutionType = "cumulative"
-evolutionType = "daily"
-#evolutionType = "curvature"
-#evolutionType = "smoothedCurvature"
-#evolutionType = "R0"  # (Experimental)
-
-# Extrapolate data before and after lockdown (0=no, 1=yes) 
-iExtrapol = 1
-
-# Smoothing: (set window size to 0 to deactivate)
-vSmoothing = [7,3]  # [window size,order of fitting polynomial]
-
-# Type of zones (see in the execution section)
-#zone = "continents"
-zone = "countries"
-################ Parameters to define manually (END) ######################
 
 ######################## Definition of Functions (BEGIN) ############################
 
@@ -152,7 +119,7 @@ def plot_country(strCountry,dataParam,displayParam,fitParam,quarParam,ax):
         ax.semilogy(xextrapol,yextrapol,ls='-',lw=2.0,c=col)
         ax.annotate(strRate, xy=(xextrapol[-1],yextrapol[-1]), xytext=(3, 3), textcoords="offset points", ha='center', va='bottom',color=col,weight='bold')
 
-def setDisplayParam(field,evolutionType,yscale,zone):
+def setDisplayParam(field,evolutionType,yscale,zone,figures_path):
     displayParam = {}
 
     strUnit, txtField = unit_and_field(field)
@@ -169,57 +136,93 @@ def setDisplayParam(field,evolutionType,yscale,zone):
 
 ######################## Definition of Functions (END) ############################
 
+def main():
+    ############## Execution section ################
+    path="https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/"
+    figures_path = "../FIGURES"
+    daysInterval = 7   # To set Major x-axis
+    startDate = datetime.date(2020, 3,1)   # Start date of the plot:
+    extrapolPeriod = 14     # How many days to extrapolate?
+    fittingPeriod = 8       # On how long do we fit the data?
 
-############## Execution section ################
+    #yscale = 'linear'
+    yscale = 'log'
 
-# Initialisation
-dataParam = loadData(path,field,evolutionType,vSmoothing,startDate=startDate)
-displayParam = setDisplayParam(field,evolutionType,yscale,zone)
-fitParam = setFitExtraParam(field,fittingPeriod, extrapolPeriod,dataParam,iExtrapol)
+    # Type of value to analyse:
+    field = "Confirmed"
+    #field = "Deaths"
+    #field = "Active"
+    #field = "DeathRate"
 
-# Set graphic objects
-close(1)
-fig = figure(num=1,figsize=(10,6))
-ax = fig.add_subplot(111)
+    # Type of evolution:
+    #evolutionType = "cumulative"
+    evolutionType = "daily"
+    #evolutionType = "curvature"
+    #evolutionType = "smoothedCurvature"
+    #evolutionType = "R0"  # (Experimental)
 
-#plot_country("World",dataParam,displayParam,fitParam,'3/22/21',ax)
-if zone == "continents":
-    plot_country("EU",dataParam,displayParam,fitParam,'3/22/21',ax)
-    #plot_country("European continent",dataParam,displayParam,fitParam,'3/22/21',ax)
-    plot_country("China",dataParam,displayParam,fitParam,'1/22/22',ax)
-    plot_country("US",dataParam,displayParam,fitParam,'3/22/20',ax)
-elif zone == "countries":
-    #plot_country("China",dataParam,displayParam,fitParam,'1/22/22',ax)
-    plot_country("US",dataParam,displayParam,fitParam,'3/22/20',ax)
-    plot_country("Italy",dataParam,displayParam,fitParam,'3/9/20',ax)
-    plot_country("Spain",dataParam,displayParam,fitParam,'3/14/20',ax)
-    plot_country("Germany",dataParam,displayParam,fitParam,'3/19/20',ax)
-    plot_country("France",dataParam,displayParam,fitParam,'3/17/20',ax)
-    #plot_country("Iran",dataParam,displayParam,fitParam,'8/17/20',ax)
-    #plot_country("Korea, South",dataParam,displayParam,fitParam,'5/22/20',ax)
-    #plot_country("Japan",dataParam,displayParam,fitParam,'5/22/20',ax)
-    #plot_country("Switzerland",dataParam,displayParam,fitParam,'5/22/20',ax)
-    #plot_country("United Kingdom",dataParam,displayParam,fitParam,'3/22/20',ax)
-    #plot_country("Denmark",dataParam,displayParam,fitParam,'3/13/20',ax)
-    #plot_country("Norway",dataParam,displayParam,fitParam,'3/12/20',ax)
-    #plot_country("Sweden",dataParam,displayParam,fitParam,'3/28/20',ax)
-    #plot_country("Finland",dataParam,displayParam,fitParam,'3/19/20',ax)
-    #plot_country("Canada",dataParam,displayParam,fitParam,'5/22/20',ax)
-    #plot_country("Belgium",dataParam,displayParam,fitParam,'3/18/20',ax)
-    #plot_country("Ireland",dataParam,displayParam,fitParam,'3/28/20',ax)
+    # Extrapolate data before and after lockdown (0=no, 1=yes) 
+    iExtrapol = 1
 
-# Add graph decorations
-if dataParam['EvolutionType'] == "R0": ax.axhline(1)
-ax.set_title(displayParam['title'])
-ax.set_yscale(displayParam['YScale'])
-ax.set_xlabel("Date")
-ax.xaxis.set_major_locator(ticker.MultipleLocator(daysInterval))
-ax.xaxis.set_minor_locator(ticker.MultipleLocator(1))
-ax.set_ylabel(displayParam['YaxisLabel'])
-ax.legend(loc=2)
-ax.grid(which='major',color='grey', linestyle='-', linewidth=1)
-ax.grid(which='minor',color='grey', linestyle='-', linewidth=0.5)
+    # Smoothing: (set window size to 0 to deactivate)
+    vSmoothing = [7,3]  # [window size,order of fitting polynomial]
 
-fig.tight_layout()
-savefig(displayParam['FileName'],dpi=600,bbox='tight')
-show()
+    # Type of zones (see in the execution section)
+    #zone = "continents"
+    zone = "countries"
+    ################ Parameters to define manually (END) ######################
+
+    # Initialisation
+    dataParam = loadData(path,field,evolutionType,vSmoothing,startDate=startDate)
+    displayParam = setDisplayParam(field,evolutionType,yscale,zone,figures_path)
+    fitParam = setFitExtraParam(field,fittingPeriod, extrapolPeriod,dataParam,iExtrapol)
+
+    # Set graphic objects
+    close(1)
+    fig = figure(num=1,figsize=(10,6))
+    ax = fig.add_subplot(111)
+
+    #plot_country("World",dataParam,displayParam,fitParam,'3/22/21',ax)
+    if zone == "continents":
+        plot_country("EU",dataParam,displayParam,fitParam,'3/22/21',ax)
+        #plot_country("European continent",dataParam,displayParam,fitParam,'3/22/21',ax)
+        plot_country("China",dataParam,displayParam,fitParam,'1/22/22',ax)
+        plot_country("US",dataParam,displayParam,fitParam,'3/22/20',ax)
+    elif zone == "countries":
+        #plot_country("China",dataParam,displayParam,fitParam,'1/22/22',ax)
+        plot_country("US",dataParam,displayParam,fitParam,'3/22/20',ax)
+        plot_country("Italy",dataParam,displayParam,fitParam,'3/9/20',ax)
+        plot_country("Spain",dataParam,displayParam,fitParam,'3/14/20',ax)
+        plot_country("Germany",dataParam,displayParam,fitParam,'3/19/20',ax)
+        plot_country("France",dataParam,displayParam,fitParam,'3/17/20',ax)
+        #plot_country("Iran",dataParam,displayParam,fitParam,'8/17/20',ax)
+        #plot_country("Korea, South",dataParam,displayParam,fitParam,'5/22/20',ax)
+        #plot_country("Japan",dataParam,displayParam,fitParam,'5/22/20',ax)
+        #plot_country("Switzerland",dataParam,displayParam,fitParam,'5/22/20',ax)
+        #plot_country("United Kingdom",dataParam,displayParam,fitParam,'3/22/20',ax)
+        #plot_country("Denmark",dataParam,displayParam,fitParam,'3/13/20',ax)
+        #plot_country("Norway",dataParam,displayParam,fitParam,'3/12/20',ax)
+        #plot_country("Sweden",dataParam,displayParam,fitParam,'3/28/20',ax)
+        #plot_country("Finland",dataParam,displayParam,fitParam,'3/19/20',ax)
+        #plot_country("Canada",dataParam,displayParam,fitParam,'5/22/20',ax)
+        #plot_country("Belgium",dataParam,displayParam,fitParam,'3/18/20',ax)
+        #plot_country("Ireland",dataParam,displayParam,fitParam,'3/28/20',ax)
+
+    # Add graph decorations
+    if dataParam['EvolutionType'] == "R0": ax.axhline(1)
+    ax.set_title(displayParam['title'])
+    ax.set_yscale(displayParam['YScale'])
+    ax.set_xlabel("Date")
+    ax.xaxis.set_major_locator(ticker.MultipleLocator(daysInterval))
+    ax.xaxis.set_minor_locator(ticker.MultipleLocator(1))
+    ax.set_ylabel(displayParam['YaxisLabel'])
+    ax.legend(loc=2)
+    ax.grid(which='major',color='grey', linestyle='-', linewidth=1)
+    ax.grid(which='minor',color='grey', linestyle='-', linewidth=0.5)
+
+    fig.tight_layout()
+    savefig(displayParam['FileName'],dpi=600,bbox='tight')
+    show()
+
+if __name__ == "__main__":
+    main()
