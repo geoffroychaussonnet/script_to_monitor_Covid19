@@ -19,7 +19,7 @@ To install the dependencies:
 ### Getting Started
 The two main scripts are:
 
-1/ plotCorrelation.py (see Fig. 1)  
+1/ plot_versus_time.py (see Fig. 1)  
 -> Plot the usual observables (confirmed cases, deaths, active cases) versus time. The observables can be show in the form of cumulated, daily value (gradient) or daily value variation (curvature)  
 -> Curves can be smoothed with the Savitzky-Golay filter  
 -> Exponential extrapolation is proposed based on data before (dashed line) and after (plain line) lockdown, if lockdown date is given.
@@ -27,7 +27,7 @@ The two main scripts are:
 
 ![Fig. 1: Example of curve produced by plotCorrelation.py](20200402_evolCovid19_Daily_deaths_for_countries.png)
 
-2/ phase_diagram.py (see Fig. 2)  
+2/ plot_phase_portrait.py (see Fig. 2)  
 -> plot the phase diagram of the usual observables.  
 -> X-axis is the gradient (=new case/day) and Y-axis is the curvature (=variation of new case/day). The course of the epidemic can be well visualized in this phase diagram.
 
