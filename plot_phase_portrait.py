@@ -15,12 +15,6 @@ from covid_utils import *
 # Argument 5: date of the confinement start. If no confinement, enter a date in the future
 # Argument 6: axis (matplotlib object) where to plot the curves
 
-
-################ Parameters to define manually (BEGIN) ######################
-# Path to the folder containing the time series:
-from covid_utils import title_and_y_axis
-
-
 ######################## Definition of Functions (BEGIN) ############################
 
 def plot_phase_country(strCountry,dataParam,displayParam,fitParam,quarParam,ax):
@@ -86,6 +80,8 @@ def setDisplayParam(field,evolutionType,yscale,zone,figures_path):
 ############## Execution section ################
 
 def main():
+
+    # Path to the folder containing the time series:
     path="https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/"
     figures_path = "../FIGURES"
     startDate = dt.date(2020, 1,1)   # Start date of the plot:

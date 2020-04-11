@@ -15,11 +15,6 @@ from covid_utils import *
 # Argument 5: date of the confinement start. If no confinement, enter a date in the future
 # Argument 6: axis (matplotlib object) where to plot the curves
 
-################ Parameters to define manually (BEGIN) ######################
-# Path to the folder containing the time series:
-from covid_utils import file_yscale
-
-
 ######################## Definition of Functions (BEGIN) ############################
 
 def get_trend(dates,evol1,fitParam,extParam):
@@ -137,7 +132,7 @@ def setDisplayParam(field,evolutionType,yscale,zone,figures_path):
 ######################## Definition of Functions (END) ############################
 
 def main():
-    ############## Execution section ################
+    # Path to the folder containing the time series:
     path="https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/"
     figures_path = "../FIGURES"
     daysInterval = 7   # To set Major x-axis
@@ -149,8 +144,8 @@ def main():
     yscale = 'log'
 
     # Type of value to analyse:
-    field = "Confirmed"
-    #field = "Deaths"
+    #field = "Confirmed"
+    field = "Deaths"
     #field = "Active"
     #field = "DeathRate"
 

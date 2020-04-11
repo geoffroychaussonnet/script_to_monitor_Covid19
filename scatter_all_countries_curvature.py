@@ -14,8 +14,6 @@ from covid_utils import unit_and_field, txt_evol
 # Argument 5: axis (matplotlib object) where to plot the curves
 
 
-
-
 ######################## Definition of Functions ############################
 
 def get_trend(dates,evol1,fitParam,extParam):
