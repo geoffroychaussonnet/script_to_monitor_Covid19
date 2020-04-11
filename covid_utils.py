@@ -1,4 +1,3 @@
-import datetime
 from pathlib import Path
 
 import numpy as np
@@ -42,6 +41,10 @@ def evolution_single(strCountry,data):
         lstCountry = ["France", "Germany", "Spain", "Italy", "Netherlands", "Portugal", "Belgium", "Sweden", "Finland", "Greece", "Ireland", "Poland", "Luxembourg", "Malta","Slovenia", "Austria", "Croatia", "Hungary", "Czechia", "Slovakia", "Hungary", "Romania", "Bulgaria", "Cyprus", "Lithuania","Latvia","Estonia"]
     elif strCountry == "European continent":
         lstCountry = ["France", "Germany", "Spain", "Italy", "Netherlands", "Portugal", "Belgium", "Sweden", "Finland", "Greece", "Ireland", "United Kingdom", "Norway","Switzerland", "Poland", "Andorra","Luxembourg", "Liechtenstein", "Malta", "San Marino", "Holy See","Monaco","Hungary", "Czechia","Slovakia", "Slovenia", "Croatia","Bosnia and Herzegovina", "Serbia", "Albania", "Romania", "Bulgaria", "Ukraine", "Belarus", "Latvia", "Estonia", "Lithuania","Moldova","North Macedonia", "Kosovo","Montenegro","Iceland","Cyprus"]
+    elif strCountry == "Africa":
+        lstCountry = "Morocco, Tunisia, Algeria, Lybia, Egypt, Mali, Niger, Chad, Sudan ,Ethiopia, Mauritania, Senegal, Guinea, Liberia, Ghana, Benin, Togo, Nigeria, Sierra Leone, Cameroon, Central African Republic, Gabon, Congo (Brazzaville), Congo (Kinshasa), Angola, Namibia, Botswana, Lesotho, South Africa, Eswatini, Zimbabwe, Mozambique, Zambia, Madagascar, Burundi, Kenya, Uganda, Somalia, South Sudan, Cote d'Ivoire, Rwanda, Djibouti"
+        lstCountry = lstCountry.split(",")
+        lstCountry = [text.strip() for text in lstCountry]
 
     for ic,cntry in enumerate(data['Country/Region']):
         if (cntry in lstCountry) or (strCountry=="World"):
