@@ -16,6 +16,8 @@ def loadData(path,field,evolutionType,vSmoothing,startDate=dt.date(2020, 1,1)):
     dataParam['EvolutionType'] = evolutionType
     dataParam['Smoothing'] = vSmoothing
     dataParam['Countries'] = set(dataParam['Confirmed']['Country/Region'])
+    with Path("confinement.dat").open() as f:
+        dataParam['Confinement'] = extract_confinement(parse_confinement(f))
     dateax = dataParam['Deaths'].columns[4:].values.astype(str)
 
     # Convert date axis to date vector
@@ -206,3 +208,39 @@ def parse_confinement(file):
                     country, {}).setdefault(t, []).append(d)
 
     return quar_dates_by_type_by_country
+
+
+def extract_confinement(quar_dates_by_type_by_country,
+                        future=dt.date(2099, 1, 1)):
+    """
+    Extract the last partial confinement, or the first total confinement,
+    or a date in the future
+
+    :param quar_dates_by_type_by_country: a mapping `country -> type -> [date]`
+    :return: a mapping `country -> date`.
+    """
+    def first_confinement(q_by_t):
+        if 'T' in q_by_t:
+            d = min(q_by_t['T'], default=future)
+        elif 'P' in q_by_t:
+            d = max(q_by_t['P'], default=future)
+        else:
+            d = future
+        return dateOut(d)
+
+    return {c: first_confinement(q_by_t)
+            for c, q_by_t in quar_dates_by_type_by_country.items()}
+
+
+# temporary data
+quar_date_by_area = {"World": '3/22/21', "EU": '3/22/21', "China": '1/22/22',
+                     "US": '3/22/20', "European continent": '3/22/21',
+                     "Italy": '3/9/20', "Spain": '3/14/20',
+                     "Germany": '3/19/20', "France": '3/17/20',
+                     "Iran": '8/17/20', "Korea, South": '5/22/20',
+                     "Japan": '5/22/20', "Switzerland": '5/22/20',
+                     "United Kingdom": '3/22/20', "Denmark": '3/13/20',
+                     "Norway": '3/12/20', "Sweden": '3/28/20',
+                     "Finland": '3/19/20', "Canada": '5/22/20',
+                     "Belgium": '3/18/20', "Ireland": '3/28/20',
+                     }

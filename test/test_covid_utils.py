@@ -34,3 +34,32 @@ Germany, P,
     def test_real_file(self):
         with Path("confinement.dat").open() as f:
             parse_confinement(f)
+
+
+class TestExtractConfinement(unittest.TestCase):
+    def test_partial(self):
+        self.assertEqual(
+            {'c': '3/15/20'},
+            extract_confinement({"c": {'P': [dt.date(2020, 3, 10),
+                                             dt.date(2020, 3, 15)]}})
+        )
+
+    def test_partial_and_total(self):
+        self.assertEqual(
+            {'c': '3/20/20'},
+            extract_confinement(
+                {"c": {'P': [dt.date(2020, 3, 10), dt.date(2020, 3, 15)],
+                       'T': [dt.date(2020, 3, 20), dt.date(2020, 3, 25)]}})
+        )
+
+    def test_empty_total(self):
+        self.assertEqual(
+            {'c': '1/1/99'},
+            extract_confinement({"c": {'P': [dt.date(2020, 3, 10)], 'T': []}})
+        )
+
+    def test_empty(self):
+        self.assertEqual(
+            {'c': '1/1/99'},
+            extract_confinement({"c": {}})
+        )
