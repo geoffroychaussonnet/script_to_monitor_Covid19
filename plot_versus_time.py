@@ -140,8 +140,8 @@ def main():
     extrapolPeriod = 14     # How many days to extrapolate?
     fittingPeriod = 8       # On how long do we fit the data?
 
-    #yscale = 'linear'
-    yscale = 'log'
+    yscale = 'linear'
+    #yscale = 'log'
 
     # Type of value to analyse:
     #field = "Confirmed"
@@ -157,7 +157,7 @@ def main():
     #evolutionType = "R0"  # (Experimental)
 
     # Extrapolate data before and after lockdown (0=no, 1=yes) 
-    iExtrapol = 1
+    iExtrapol = 0
 
     # Smoothing: (set window size to 0 to deactivate)
     vSmoothing = [7,3]  # [window size,order of fitting polynomial]
