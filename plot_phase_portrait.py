@@ -26,13 +26,21 @@ def plot_phase_country(strCountry,dataParam,displayParam,fitParam,quarParam,ax):
 
     # Extract evolution for this country
     dataParam['EvolutionType'] = "smoothedCurvature"
-    curvature = evolution_country(strCountry,dataParam,displayParam)
+    curvature = evolution_country(strCountry, dataParam, displayParam['Field'],
+                                  dataParam['EvolutionType'],
+                                  dataParam['FilterDate'],
+                                  dataParam['Smoothing'])
     dataParam['EvolutionType'] = "daily"
-    gradient = evolution_country(strCountry,dataParam,displayParam)
+    gradient = evolution_country(strCountry, dataParam, displayParam['Field'],
+                                 dataParam['EvolutionType'],
+                                 dataParam['FilterDate'],
+                                 dataParam['Smoothing'])
 
     # Filter data for more than 100 cases
     dataParam['EvolutionType'] = "cumulative"
-    cumul = evolution_country(strCountry,dataParam,displayParam)
+    cumul = evolution_country(strCountry, dataParam, displayParam['Field'],
+                              dataParam['EvolutionType'],
+                              dataParam['FilterDate'], dataParam['Smoothing'])
 
     gooddata = (cumul>100)
     cumul = cumul[gooddata]

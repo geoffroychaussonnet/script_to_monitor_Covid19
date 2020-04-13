@@ -6,6 +6,9 @@ import pandas as pd
 import datetime as dt
 from scipy.signal import savgol_filter
 
+# the beginning of values in the csv file
+start_of_values = 4
+
 
 def loadData(path,field,evolutionType,vSmoothing,startDate=dt.date(2020, 1,1)):
     dataParam = {}
@@ -35,71 +38,109 @@ def loadData(path,field,evolutionType,vSmoothing,startDate=dt.date(2020, 1,1)):
     return dataParam
 
 
-def evolution_single(strCountry,data):
+def cumulative_evolution_single(area, data):
+    """
+    :param area: a country or the name set of countries
+    :param data: the data from J. Hopkins University
+    :return: the cumulative evolution of the area
+    """
+    size = len(data.iloc[0].values[start_of_values:])
+    evolution = np.zeros(size, dtype=int)
+    countries = _get_countries(area)
 
-    size=len(data.iloc[0].values[4:])
-    evolution = np.zeros(size,dtype=int)
-
-    lstCountry = [strCountry]
-    if strCountry == "EU":
-        lstCountry = ["France", "Germany", "Spain", "Italy", "Netherlands", "Portugal", "Belgium", "Sweden", "Finland", "Greece", "Ireland", "Poland", "Luxembourg", "Malta","Slovenia", "Austria", "Croatia", "Hungary", "Czechia", "Slovakia", "Hungary", "Romania", "Bulgaria", "Cyprus", "Lithuania","Latvia","Estonia"]
-    elif strCountry == "European continent":
-        lstCountry = ["France", "Germany", "Spain", "Italy", "Netherlands", "Portugal", "Belgium", "Sweden", "Finland", "Greece", "Ireland", "United Kingdom", "Norway","Switzerland", "Poland", "Andorra","Luxembourg", "Liechtenstein", "Malta", "San Marino", "Holy See","Monaco","Hungary", "Czechia","Slovakia", "Slovenia", "Croatia","Bosnia and Herzegovina", "Serbia", "Albania", "Romania", "Bulgaria", "Ukraine", "Belarus", "Latvia", "Estonia", "Lithuania","Moldova","North Macedonia", "Kosovo","Montenegro","Iceland","Cyprus"]
-    elif strCountry == "Africa":
-        lstCountry = "Morocco, Tunisia, Algeria, Lybia, Egypt, Mali, Niger, Chad, Sudan ,Ethiopia, Mauritania, Senegal, Guinea, Liberia, Ghana, Benin, Togo, Nigeria, Sierra Leone, Cameroon, Central African Republic, Gabon, Congo (Brazzaville), Congo (Kinshasa), Angola, Namibia, Botswana, Lesotho, South Africa, Eswatini, Zimbabwe, Mozambique, Zambia, Madagascar, Burundi, Kenya, Uganda, Somalia, South Sudan, Cote d'Ivoire, Rwanda, Djibouti"
-        lstCountry = lstCountry.split(",")
-        lstCountry = [text.strip() for text in lstCountry]
-
-    for ic,cntry in enumerate(data['Country/Region']):
-        if (cntry in lstCountry) or (strCountry=="World"):
-            locRegion = data.iloc[ic].values[4:]
-            locRegion[np.isnan(locRegion.tolist())] = 0
-            evolution[:] += locRegion.astype(int)
+    for i, country in enumerate(data['Country/Region']):
+        if area == "World" or country in countries:
+            country_values = data.iloc[i].values[start_of_values:]
+            # replace missing values by zeroes
+            country_values[np.isnan(country_values.tolist())] = 0
+            evolution[:] += country_values.astype(int)
 
     return evolution
 
 
-def evolution_country(strCountry,dataParam,displayParam):
+def _get_countries(area):
+    """
+    :param area: a country or the name set of countries
+    :return: countries that belong to the area
+    """
+    if area == "EU":
+        countries = {"France", "Germany", "Spain", "Italy", "Netherlands",
+                     "Portugal", "Belgium", "Sweden", "Finland", "Greece",
+                     "Ireland", "Poland", "Luxembourg", "Malta", "Slovenia",
+                     "Austria", "Croatia", "Hungary", "Czechia", "Slovakia",
+                     "Hungary", "Romania", "Bulgaria", "Cyprus", "Lithuania",
+                     "Latvia", "Estonia"}
+    elif area == "European continent":
+        countries = {"France", "Germany", "Spain", "Italy", "Netherlands",
+                     "Portugal", "Belgium", "Sweden", "Finland", "Greece",
+                     "Ireland", "United Kingdom", "Norway", "Switzerland",
+                     "Poland", "Andorra", "Luxembourg", "Liechtenstein",
+                     "Malta", "San Marino", "Holy See", "Monaco", "Hungary",
+                     "Czechia", "Slovakia", "Slovenia", "Croatia",
+                     "Bosnia and Herzegovina", "Serbia", "Albania", "Romania",
+                     "Bulgaria", "Ukraine", "Belarus", "Latvia", "Estonia",
+                     "Lithuania", "Moldova", "North Macedonia", "Kosovo",
+                     "Montenegro", "Iceland", "Cyprus"}
+    elif area == "Africa":
+        countries = {"Morocco", "Tunisia", "Algeria", "Lybia", "Egypt", "Mali",
+                     "Niger", "Chad", "Sudan", "Ethiopia", "Mauritania",
+                     "Senegal", "Guinea", "Liberia", "Ghana", "Benin", "Togo",
+                     "Nigeria", "Sierra Leone", "Cameroon",
+                     "Central African Republic", "Gabon",
+                     "Congo (Brazzaville)", "Congo (Kinshasa)", "Angola",
+                     "Namibia", "Botswana", "Lesotho", "South Africa",
+                     "Eswatini", "Zimbabwe", "Mozambique", "Zambia",
+                     "Madagascar", "Burundi", "Kenya", "Uganda", "Somalia",
+                     "South Sudan", "Cote d'Ivoire", "Rwanda", "Djibouti"}
+    else:
+        countries = {area}
+    return countries
 
-    field = displayParam['Field']
-    if field=="Confirmed":
-        evolution = evolution_single(strCountry,dataParam['Confirmed'])
-    elif field=="Deaths":
-        evolution = evolution_single(strCountry,dataParam['Deaths'])
-    elif field=="Active":
-        evolC = evolution_single(strCountry,dataParam['Confirmed'])
-        evolD = evolution_single(strCountry,dataParam['Deaths'])
-        evolR = evolution_single(strCountry,dataParam['Recovered'])
-        evolution = evolC - evolR - evolD
-    elif field=="DeathRate":
-        evolC = evolution_single(strCountry,dataParam['Confirmed'])
-        evolD = evolution_single(strCountry,dataParam['Deaths'])
-        evolution = evolD/evolC*100
 
-    if dataParam['EvolutionType'] == "cumulative":
-        evol =  evolution[dataParam['FilterDate']]
-    elif dataParam['EvolutionType'] == "daily":
-        dedt = np.zeros(len(evolution))
-        dedt[1:] = np.diff(evolution)
-        evol = dedt[dataParam['FilterDate']]
-    elif dataParam['EvolutionType'] == "curvature":
-        d2edt2 = np.zeros(len(evolution))
-        d2edt2[2:] = np.diff(evolution,2)
-        evol = d2edt2[dataParam['FilterDate']]
-    elif dataParam['EvolutionType'] == "smoothedCurvature":
-        dedt = np.diff(evolution)
-        evol = savgol_filter(dedt, dataParam['Smoothing'][0], dataParam['Smoothing'][1]) # arg2: window size; arg3:  polynomial order 
-        d2edt2 = np.zeros(len(evolution))
-        d2edt2[2:] = np.diff(evol)
-        evol = d2edt2[dataParam['FilterDate']]
-    elif dataParam['EvolutionType'] == "R0":
-        R0 = np.zeros(len(evolution))
-        delta0 = np.diff(evolution)
-        delta = savgol_filter(delta0, dataParam['Smoothing'][0], dataParam['Smoothing'][1]) # arg2: window size; arg3:  polynomial order 
-        R0[1:] = delta/np.roll(delta,5)
-        evol = R0[dataParam['FilterDate']]
+def evolution_country(area, data, field, evolution_type, filter_date,
+                      smoothing):
+    if field == "Confirmed":
+        cumulative_evolution = cumulative_evolution_single(area, data['Confirmed'])
+    elif field == "Deaths":
+        cumulative_evolution = cumulative_evolution_single(area, data['Deaths'])
+    elif field == "Active":
+        evol_c = cumulative_evolution_single(area, data['Confirmed'])
+        evol_d = cumulative_evolution_single(area, data['Deaths'])
+        evol_r = cumulative_evolution_single(area, data['Recovered'])
+        cumulative_evolution = evol_c - evol_r - evol_d
+    elif field == "DeathRate":
+        evol_c = cumulative_evolution_single(area, data['Confirmed'])
+        evol_d = cumulative_evolution_single(area, data['Deaths'])
+        cumulative_evolution = evol_d/evol_c*100
+    else:
+        raise ValueError(field)
 
-    return evol
+    if evolution_type == "cumulative":
+        evolution = cumulative_evolution
+    elif evolution_type == "daily":
+        evolution = np.zeros(len(cumulative_evolution))
+        evolution[1:] = np.diff(cumulative_evolution)
+    elif evolution_type == "curvature":
+        evolution = np.zeros(len(cumulative_evolution))
+        evolution[2:] = np.diff(cumulative_evolution, 2)
+    elif evolution_type == "smoothedCurvature":
+        # np.diff #1
+        window_length, polyorder = smoothing
+        evolution = np.diff(cumulative_evolution)
+        smoothed_evolution = savgol_filter(evolution, window_length, polyorder)
+        # np.diff #2
+        evolution = np.zeros(len(cumulative_evolution))
+        evolution[2:] = np.diff(smoothed_evolution)
+    elif evolution_type == "R0":
+        window_length, polyorder = smoothing
+        evolution = np.zeros(len(cumulative_evolution))
+        delta = np.diff(cumulative_evolution)
+        smoothed_delta = savgol_filter(delta, window_length, polyorder)
+        evolution[1:] = smoothed_delta/np.roll(smoothed_delta, 5)
+    else:
+        raise ValueError(evolution_type)
+
+    return evolution[filter_date]
 
 
 def dateOut(date):

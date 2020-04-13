@@ -65,7 +65,11 @@ def scatter_curvature_vs_X_World(strCountry, dataParam,displayParam,fitParam,qua
     for strCountry in dataParam["Confirmed"]["Country/Region"]:
         if strCountry not in lstDoneCountry:
             lstDoneCountry.append(strCountry)
-            evol1 = evolution_country(strCountry,dataParam,displayParam)
+            evol1 = evolution_country(strCountry, dataParam,
+                                      displayParam['Field'],
+                                      dataParam['EvolutionType'],
+                                      dataParam['FilterDate'],
+                                      dataParam['Smoothing'])
             matCountry.append(evol1)
 
     periodX = []
@@ -121,7 +125,11 @@ def plot_curvature_vs_gradient(strCountry,dataParam,displayParam,fitParam,quarPa
     for strCountry in dataParam["Confirmed"]["Country/Region"]:
         if strCountry not in lstDoneCountry:
             lstDoneCountry.append(strCountry)
-            evol1 = evolution_country(strCountry,dataParam,displayParam)
+            evol1 = evolution_country(strCountry, dataParam,
+                                      displayParam['Field'],
+                                      dataParam['EvolutionType'],
+                                      dataParam['FilterDate'],
+                                      dataParam['Smoothing'])
             matCountry.append(evol1)
 
     periodX = []
@@ -173,7 +181,9 @@ def plot_country(strCountry,dataParam,displayParam,fitParam,quarParam,ax):
     iExtrapol = fitParam[2]
 
     # Extract evolution for this country
-    evol1 = evolution_country(strCountry,dataParam,displayParam)
+    evol1 = evolution_country(strCountry, dataParam, displayParam['Field'],
+                              dataParam['EvolutionType'],
+                              dataParam['FilterDate'], dataParam['Smoothing'])
 
     # find the quarantine date 
     iQuar = np.where(dataParam['Dates']>=dateIn(quarDate))

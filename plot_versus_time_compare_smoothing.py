@@ -65,7 +65,9 @@ def plot_country(strCountry,dataParam,displayParam,fitParam,quarParam,ax):
     iExtrapol = fitParam[2]
 
     # Extract evolution for this country
-    evol1 = evolution_country(strCountry,dataParam,displayParam)
+    evol1 = evolution_country(strCountry, dataParam, displayParam['Field'],
+                              dataParam['EvolutionType'],
+                              dataParam['FilterDate'], dataParam['Smoothing'])
 
     # find the quarantine date 
     iQuar = np.where(dataParam['Dates']>=dateIn(quarDate))
