@@ -17,55 +17,49 @@ from covid_utils import *
 
 ######################## Definition of Functions (BEGIN) ############################
 
-def plot_phase_country(strCountry,dataParam,displayParam,fitParam,quarParam,ax):
-    print("########## Treating country: %12s ###########" %strCountry)
-    quarDate = quarParam
-    fittingPeriod = fitParam[0]
-    extrapolPeriod = fitParam[1]
-    iExtrapol = fitParam[2]
+
+def plot_phase_country(area, data, quar_date, ax, field, filter_date,
+                       smoothing, y_scale):
+    print("########## Treating country: %12s ###########" % area)
 
     # Extract evolution for this country
-    dataParam['EvolutionType'] = "smoothedCurvature"
-    curvature = evolution_country(strCountry, dataParam, displayParam['Field'],
-                                  dataParam['EvolutionType'],
-                                  dataParam['FilterDate'],
-                                  dataParam['Smoothing'])
-    dataParam['EvolutionType'] = "daily"
-    gradient = evolution_country(strCountry, dataParam, displayParam['Field'],
-                                 dataParam['EvolutionType'],
-                                 dataParam['FilterDate'],
-                                 dataParam['Smoothing'])
+    curvature = evolution_country(area, data, field,
+                                  "smoothedCurvature", filter_date, smoothing)
+    gradient = evolution_country(area, data, field, "daily", filter_date,
+                                 smoothing)
 
     # Filter data for more than 100 cases
-    dataParam['EvolutionType'] = "cumulative"
-    cumul = evolution_country(strCountry, dataParam, displayParam['Field'],
-                              dataParam['EvolutionType'],
-                              dataParam['FilterDate'], dataParam['Smoothing'])
+    cumul = evolution_country(area, data, field, "cumulative",
+                              filter_date, smoothing)
+    good_data = (cumul > 100)
 
-    gooddata = (cumul>100)
-    cumul = cumul[gooddata]
-    gradient = gradient[gooddata]
-    curvature = curvature[gooddata]
-    locDates = dataParam['Dates'][gooddata]
+    gradient = gradient[good_data]
+    curvature = curvature[good_data]
+    dates = data['Dates'][good_data]
     
     # find the quarantine date 
-    iQuar = locDates>=dateIn(quarDate)
+    quar_date = dateIn(quar_date)
+    quar_indices = dates >= quar_date
 
+    # smooth
     scurv = curvature
     sgrad = gradient
-    if dataParam['Smoothing'][0] != 0:
-        scurv = savgol_filter(curvature, dataParam['Smoothing'][0], dataParam['Smoothing'][1]) # arg2: window size; arg3:  polynomial order 
-        sgrad = savgol_filter(gradient, dataParam['Smoothing'][0], dataParam['Smoothing'][1]) # arg2: window size; arg3:  polynomial order 
+    window_length, polyorder = smoothing
+    if window_length != 0:
+        scurv = savgol_filter(curvature, window_length, polyorder)
+        sgrad = savgol_filter(gradient, window_length, polyorder)
 
-    if displayParam['YScale'] == 'log':
-        scurv = np.ma.masked_where(scurv<=0,scurv)
-    p = ax.semilogy(sgrad,scurv,ls='-',marker='o',lw=4.0,label=strCountry)
+    # draw the diagram
+    if y_scale == 'log':
+        scurv = np.ma.masked_where(scurv <= 0, scurv)
+    p = ax.semilogy(sgrad, scurv, ls='-', marker='o', lw=4.0, label=area)
     col = p[0].get_color()
-    ax.scatter(sgrad[-1],scurv[-1],c=col,s=100,marker="s")
+    ax.scatter(sgrad[-1], scurv[-1], c=col, s=100, marker="s")
 
-    if sum(iQuar) > 0: # Quarantine found
+    if sum(quar_indices) > 0:  # Quarantine found
         # Plot the quarantine date
-        ax.scatter(sgrad[iQuar][0],scurv[iQuar][0],c=col,s=300,marker="X")
+        ax.scatter(sgrad[quar_indices][0], scurv[quar_indices][0], c=col, s=300,
+                   marker="X")
 
 def setDisplayParam(field,evolutionType,yscale,zone,figures_path):
     displayParam = {}
@@ -127,7 +121,6 @@ def main():
     # Initialisation
     dataParam = loadData(path,field,evolutionType,vSmoothing,startDate=startDate)
     displayParam = setDisplayParam(field,evolutionType,yscale,zone,figures_path)
-    fitParam = setFitExtraParam(field,fittingPeriod, extrapolPeriod,dataParam,iExtrapol)
 
     # Set graphic objects
     close(1)
@@ -143,8 +136,9 @@ def main():
 
     for area in areas:
         quar_date = dataParam['Confinement'].get(area, '1/1/99')
-        plot_phase_country(area, dataParam, displayParam, fitParam, quar_date,
-                           ax)
+        plot_phase_country(area, dataParam, quar_date, ax,
+                           displayParam['Field'], dataParam['FilterDate'],
+                           dataParam['Smoothing'], displayParam['YScale'])
 
     # Add graph decorations
     ax.set_title(displayParam['title'])
