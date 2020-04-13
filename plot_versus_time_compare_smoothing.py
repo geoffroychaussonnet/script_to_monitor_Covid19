@@ -19,6 +19,8 @@ from covid_utils import *
 
 
 ######################## Definition of Functions ############################
+from covid_utils import extrapol_period_by_field
+
 
 def get_trend(dates,evol1,fitParam,extParam):
     dtFitBeg = fitParam[0]
@@ -176,7 +178,7 @@ def main():
 
     dataParam = load_data(path, start_date=startDate)
     displayParam = setDisplayParam(field,evolutionType,yscale,figures_path)
-    fitParam = setFitExtraParam(field,fittingPeriod, extrapolPeriod,dataParam,iExtrapol)
+    fitParam = (fittingPeriod, extrapol_period_by_field[field], iExtrapol)
 
     close(1)
     fig = figure(num=1,figsize=(10,6))

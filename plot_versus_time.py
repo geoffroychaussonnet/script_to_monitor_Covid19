@@ -16,6 +16,8 @@ from covid_utils import *
 # Argument 6: axis (matplotlib object) where to plot the curves
 
 ######################## Definition of Functions (BEGIN) ############################
+from covid_utils import extrapol_period_by_field
+
 
 def get_trend(dates,evol1,fitParam,extParam):
     dtFitBeg = fitParam[0]
@@ -172,7 +174,7 @@ def main():
     # Initialisation
     data = load_data(path, start_date=startDate)
     displayParam = setDisplayParam(field,evolutionType,yscale,zone,figures_path)
-    fitParam = setFitExtraParam(field,fittingPeriod, extrapolPeriod,data,iExtrapol)
+    fitParam = (fittingPeriod, extrapol_period_by_field[field], iExtrapol)
 
     # Set graphic objects
     close(1)

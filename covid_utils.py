@@ -158,15 +158,12 @@ def dateIn(str_date):
     return dt.date(year, month, day)
 
 
-def setFitExtraParam(field, fittingPeriod, extrapolPeriod,dataParam,iExtrapol):
-    if field=="Confirmed":
-        return [fittingPeriod, 14, iExtrapol]
-    elif field=="Deaths":
-        return [fittingPeriod, 21, iExtrapol]
-    elif field=="Active":
-        return [fittingPeriod, 21, iExtrapol]
-    elif field=="DeathRate":
-        return [fittingPeriod, 21, iExtrapol]
+extrapol_period_by_field = {
+    "Confirmed": 14,
+    "Deaths": 21,
+    "Active": 21,
+    "DeathRate": 21
+}
 
 
 def unit_and_field(field):
@@ -217,6 +214,7 @@ def file_yscale(displayParam, figures_path, png_format, txtEvol, txtField, yscal
             strDateToday, txtEvol, txtField)
     displayParam['FileName'] = fname.replace(" ", "_")
     displayParam['YScale'] = yscale
+
 
 def parse_confinement(file):
     """
