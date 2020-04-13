@@ -53,16 +53,15 @@ def get_trend(dates,evol1,fitParam,extParam):
     return xcorrel1, correl1, strRate
 
 
-def scatter_curvature_vs_X_World(dataParam, ax, field, evolution_type,
-                                 filter_date, smoothing):
+def scatter_curvature_vs_x_world(data, ax, field, evolution_type, smoothing):
     print("########## Treating World #############")
-
+    filter_date = data['FilterDate']
     lstDoneCountry = []
     matCountry = []
-    for area in dataParam["Confirmed"]["Country/Region"]:
+    for area in data["Confirmed"]["Country/Region"]:
         if area not in lstDoneCountry:
             lstDoneCountry.append(area)
-            evol1 = evolution_country(area, dataParam,
+            evol1 = evolution_country(area, data,
                                       field,
                                       evolution_type,
                                       filter_date,
@@ -112,16 +111,17 @@ def scatter_curvature_vs_X_World(dataParam, ax, field, evolution_type,
             ax.annotate(cntry, xy=(x,-y), xytext=(3, 3), textcoords="offset points", ha='center', va='bottom',color=col2,weight='bold')
 
 
-def plot_curvature_vs_gradient(area, dataParam, displayParam, ax, field,
-                               evolution_type, filter_date, smoothing):
+def plot_curvature_vs_gradient(area, data, ax, field,
+                               evolution_type, smoothing):
     print("########## Treating country: ", area, " #############")
+    filter_date = data['FilterDate']
 
     lstDoneCountry = []
     matCountry = []
-    for area in dataParam["Confirmed"]["Country/Region"]:
+    for area in data["Confirmed"]["Country/Region"]:
         if area not in lstDoneCountry:
             lstDoneCountry.append(area)
-            evol1 = evolution_country(area, dataParam,
+            evol1 = evolution_country(area, data,
                                       field,
                                       evolution_type,
                                       filter_date,
@@ -171,18 +171,19 @@ def plot_curvature_vs_gradient(area, dataParam, displayParam, ax, field,
             ax.annotate(cntry, xy=(x,-y), xytext=(3, 3), textcoords="offset points", ha='center', va='bottom',color=col2,weight='bold')
 
 
-def plot_country(strCountry, dataParam, fitParam, quar_date, ax,
-                 field, evolution_type, filter_date, smoothing, y_scale):
+def plot_country(strCountry, data, fitParam, quar_date, ax,
+                 field, evolution_type, smoothing, y_scale):
     print("########## Treating country: ", strCountry, " #############")
+    filter_date = data['FilterDate']
     quar_date = dateIn(quar_date)
     fittingPeriod, extrapolPeriod, iExtrapol = fitParam
 
     # Extract evolution for this country
-    evol1 = evolution_country(strCountry, dataParam, field, evolution_type,
+    evol1 = evolution_country(strCountry, data, field, evolution_type,
                               filter_date, smoothing)
 
     # find the quarantine date 
-    dates = dataParam['Dates']
+    dates = data['Dates']
     iQuar = dates >= quar_date
 
     fitParam1 = []
@@ -213,7 +214,7 @@ def plot_country(strCountry, dataParam, fitParam, quar_date, ax,
 
     if y_scale == 'log':
         evol1 = np.ma.masked_where(evol1<=0,evol1)
-    date_axis = dataParam['DateAxis']
+    date_axis = data['DateAxis']
     p = ax.semilogy(date_axis, evol1, ls='-', lw=4.0, label=strCountry)
     col = p[0].get_color()
 
@@ -276,22 +277,20 @@ def main():
 
     vSmoothing = [7,3]  # [window size,order of fitting polynomial]
     ################ Parameters to define manually ######################
-    dataParam = loadData(path,field,evolutionType,vSmoothing,startDate=startDate)
+    dataParam = load_data(path, start_date=startDate)
     displayParam = setDisplayParam(field,evolutionType,yscale,figures_path)
-    fitParam = setFitExtraParam(field,fittingPeriod, extrapolPeriod,dataParam,iExtrapol)
 
     close(1)
     fig = figure(num=1,figsize=(10,6))
     ax = fig.add_subplot(111)
 
-    scatter_curvature_vs_X_World(dataParam, ax, displayParam['Field'],
-                                 dataParam['EvolutionType'],
-                                 dataParam['FilterDate'],
-                                 dataParam['Smoothing'])
+    scatter_curvature_vs_x_world(dataParam, ax, field,
+                                 evolutionType,
+                                 vSmoothing)
 
     #ax.set_title(displayParam['title'])
-    ax.set_xscale(displayParam['YScale'])
-    ax.set_yscale(displayParam['YScale'])
+    ax.set_xscale(yscale)
+    ax.set_yscale(yscale)
     #ax.set_xlabel("Date")
     #ax.xaxis.set_major_locator(ticker.MultipleLocator(daysInterval))
     #ax.xaxis.set_minor_locator(ticker.MultipleLocator(1))

@@ -18,9 +18,9 @@ from covid_utils import *
 ######################## Definition of Functions (BEGIN) ############################
 
 
-def plot_phase_country(area, data, quar_date, ax, field, filter_date,
-                       smoothing, y_scale):
+def plot_phase_country(area, data, quar_date, ax, field, smoothing, y_scale):
     print("########## Treating country: %12s ###########" % area)
+    filter_date = data['FilterDate']
 
     # Extract evolution for this country
     curvature = evolution_country(area, data, field,
@@ -119,7 +119,7 @@ def main():
 
 
     # Initialisation
-    dataParam = loadData(path,field,evolutionType,vSmoothing,startDate=startDate)
+    dataParam = load_data(path, start_date=startDate)
     displayParam = setDisplayParam(field,evolutionType,yscale,zone,figures_path)
 
     # Set graphic objects
@@ -137,8 +137,7 @@ def main():
     for area in areas:
         quar_date = dataParam['Confinement'].get(area, '1/1/99')
         plot_phase_country(area, dataParam, quar_date, ax,
-                           displayParam['Field'], dataParam['FilterDate'],
-                           dataParam['Smoothing'], displayParam['YScale'])
+                           field, vSmoothing, yscale)
 
     # Add graph decorations
     ax.set_title(displayParam['title'])

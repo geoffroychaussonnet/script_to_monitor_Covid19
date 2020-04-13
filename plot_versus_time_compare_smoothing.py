@@ -58,8 +58,9 @@ def get_trend(dates,evol1,fitParam,extParam):
 
 
 def plot_country(area, dataParam, fitParam, quar_date, ax, field,
-                 evolution_type, filter_date, smoothing, y_scale):
+                 evolution_type, smoothing, y_scale):
     print("########## Treating country: %12s ###########" % area)
+    filter_date = dataParam['FilterDate']
     quar_date = dateIn(quar_date)
     fittingPeriod, extrapolPeriod, iExtrapol = fitParam
 
@@ -173,7 +174,7 @@ def main():
     vSmoothing = [5,3]  # [window size,order of fitting polynomial]
     ################ Parameters to define manually ######################
 
-    dataParam = loadData(path,field,evolutionType,vSmoothing,startDate=startDate)
+    dataParam = load_data(path, start_date=startDate)
     displayParam = setDisplayParam(field,evolutionType,yscale,figures_path)
     fitParam = setFitExtraParam(field,fittingPeriod, extrapolPeriod,dataParam,iExtrapol)
 
@@ -188,14 +189,13 @@ def main():
     for area in areas:
         quar_date = dataParam['Confinement'].get(area, '1/1/99')
         plot_country(area, dataParam, fitParam, quar_date, ax,
-                     displayParam['Field'], dataParam['EvolutionType'],
-                     dataParam['FilterDate'], dataParam['Smoothing'],
-                     displayParam['YScale'])
+                     field, evolutionType, vSmoothing,yscale)
 
     for lax in ax:
-        if dataParam['EvolutionType'] == "R0": lax.axhline(1)
+        if evolutionType == "R0":
+            lax.axhline(1)
         lax.set_title(displayParam['title'])
-        lax.set_yscale(displayParam['YScale'])
+        lax.set_yscale(yscale)
         lax.set_xlabel("Date")
         lax.xaxis.set_major_locator(ticker.MultipleLocator(daysInterval))
         lax.xaxis.set_minor_locator(ticker.MultipleLocator(1))

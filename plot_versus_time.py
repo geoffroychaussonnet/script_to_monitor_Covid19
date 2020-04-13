@@ -54,19 +54,20 @@ def get_trend(dates,evol1,fitParam,extParam):
     return xcorrel1, correl1, strRate
 
 
-def plot_country(area, dataParam, fitParam, quar_date, ax, field,
-                 smoothing, evolution_type, filter_date, y_scale):
+def plot_country(area, data, fitParam, quar_date, ax, field,
+                 smoothing, evolution_type, y_scale):
     print("########## Treating country: %12s ###########" % area)
+    filter_date = data['FilterDate']
     quar_date = dateIn(quar_date)
     fittingPeriod, extrapolPeriod, iExtrapol = fitParam
-    date_axis = dataParam['DateAxis']
+    date_axis = data['DateAxis']
 
     # Extract evolution for this country
-    evol1 = evolution_country(area, dataParam, field, evolution_type,
+    evol1 = evolution_country(area, data, field, evolution_type,
                               filter_date, smoothing)
 
     # find the quarantine date 
-    iQuar = dataParam['Dates'] >= quar_date
+    iQuar = data['Dates'] >= quar_date
 
     fitParam1 = []
     extParam1 = []
@@ -106,12 +107,12 @@ def plot_country(area, dataParam, fitParam, quar_date, ax, field,
     if (iExtrapol==0): return
 
     # Get the trend
-    xextrapol, yextrapol, strRate = get_trend(dataParam['Dates'],evol1,fitParam1,extParam1)
+    xextrapol, yextrapol, strRate = get_trend(data['Dates'], evol1, fitParam1, extParam1)
     ax.semilogy(xextrapol,yextrapol,ls='--',lw=2.0,c=col)
     ax.annotate(strRate, xy=(xextrapol[-1],yextrapol[-1]), xytext=(3, 3), textcoords="offset points", ha='center', va='bottom',color=col,weight='bold')
 
     if sum(iQuar) > 3: # Quarantine found
-        xextrapol, yextrapol, strRate = get_trend(dataParam['Dates'],evol1,fitParam2,extParam2)
+        xextrapol, yextrapol, strRate = get_trend(data['Dates'], evol1, fitParam2, extParam2)
         ax.semilogy(xextrapol,yextrapol,ls='-',lw=2.0,c=col)
         ax.annotate(strRate, xy=(xextrapol[-1],yextrapol[-1]), xytext=(3, 3), textcoords="offset points", ha='center', va='bottom',color=col,weight='bold')
 
@@ -169,9 +170,9 @@ def main():
     ################ Parameters to define manually (END) ######################
 
     # Initialisation
-    dataParam = loadData(path,field,evolutionType,vSmoothing,startDate=startDate)
+    data = load_data(path, start_date=startDate)
     displayParam = setDisplayParam(field,evolutionType,yscale,zone,figures_path)
-    fitParam = setFitExtraParam(field,fittingPeriod, extrapolPeriod,dataParam,iExtrapol)
+    fitParam = setFitExtraParam(field,fittingPeriod, extrapolPeriod,data,iExtrapol)
 
     # Set graphic objects
     close(1)
@@ -186,14 +187,13 @@ def main():
         areas = ["World"]
 
     for area in areas:
-        quar_date = dataParam['Confinement'].get(area, '1/1/99')
-        plot_country(area, dataParam, fitParam, quar_date, ax,
-                     displayParam['Field'], dataParam['Smoothing'],
-                     dataParam['EvolutionType'], dataParam['FilterDate'],
-                     displayParam['YScale'])
+        quar_date = data['Confinement'].get(area, '1/1/99')
+        plot_country(area, data, fitParam, quar_date, ax, field, vSmoothing,
+                     evolutionType, yscale)
 
     # Add graph decorations
-    if dataParam['EvolutionType'] == "R0": ax.axhline(1)
+    if evolutionType == "R0":
+        ax.axhline(1)
     ax.set_title(displayParam['title'])
     ax.set_yscale(displayParam['YScale'])
     ax.set_xlabel("Date")

@@ -10,32 +10,27 @@ from scipy.signal import savgol_filter
 start_of_values = 4
 
 
-def loadData(path,field,evolutionType,vSmoothing,startDate=dt.date(2020, 1,1)):
-    dataParam = {}
-    dataParam['Confirmed'] = pd.read_csv(path+"time_series_covid19_confirmed_global.csv")
-    dataParam['Deaths'] = pd.read_csv(path+"time_series_covid19_deaths_global.csv")
-    dataParam['Recovered'] = pd.read_csv(path+"time_series_covid19_recovered_global.csv")
-    dataParam['Field'] = field
-    dataParam['EvolutionType'] = evolutionType
-    dataParam['Smoothing'] = vSmoothing
-    dataParam['Countries'] = set(dataParam['Confirmed']['Country/Region'])
+def load_data(path, start_date=dt.date(2020, 1, 1)):
+    confirmed = pd.read_csv(path + "time_series_covid19_confirmed_global.csv")
+    deaths = pd.read_csv(path + "time_series_covid19_deaths_global.csv")
+    recovered = pd.read_csv(path + "time_series_covid19_recovered_global.csv")
+    data = {'Confirmed': confirmed, 'Deaths': deaths, 'Recovered': recovered,
+            'Countries': set(confirmed['Country/Region'])}
     with Path("confinement.dat").open() as f:
-        dataParam['Confinement'] = extract_confinement(parse_confinement(f))
-    dateax = dataParam['Deaths'].columns[4:].values.astype(str)
+        data['Confinement'] = extract_confinement(parse_confinement(f))
 
+    dates_str = deaths.columns[start_of_values:].values.astype(str)
     # Convert date axis to date vector
-    dates = np.array([dt.datetime.strptime(plof,'%m/%d/%y').date() for plof in dateax])
+    dates = np.array([dt.datetime.strptime(date_str, '%m/%d/%y').date()
+                      for date_str in dates_str])
 
     # Filter axe of dates
-    filterDate = (dates>=startDate)
-    dateax = dateax[filterDate]
-    dates = dates[filterDate]
+    filter_date = dates >= start_date
+    data['FilterDate'] = filter_date
+    data['DateAxis'] = dates_str[filter_date]
+    data['Dates'] = dates[filter_date]
 
-    dataParam['FilterDate'] = filterDate
-    dataParam['DateAxis'] = dateax
-    dataParam['Dates'] = dates
-
-    return dataParam
+    return data
 
 
 def cumulative_evolution_single(area, data):
