@@ -194,11 +194,10 @@ def txt_evol(evolutionType):
     return txtEvol
 
 
-def title_and_y_axis(displayParam, field, strUnit, txtEvol, txtField,
+def title_and_y_axis(displayParam, strUnit, txtEvol, txtField,
                      txt_title_format):
     txtTitle = txt_title_format % (txtEvol, txtField)
     txtYaxis = "%s %s %s" % (txtEvol, txtField, strUnit)
-    displayParam['Field'] = field
     displayParam['title'] = txtTitle
     displayParam['YaxisLabel'] = txtYaxis
 

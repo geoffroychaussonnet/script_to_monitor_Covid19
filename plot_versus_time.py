@@ -124,12 +124,11 @@ def setDisplayParam(field,evolutionType,yscale,zone,figures_path):
     strUnit, txtField = unit_and_field(field)
     txtEvol = txt_evol(evolutionType)
 
-    txt_title_format = "%s %s\n (Source: Johns Hopkins University)"
-    title_and_y_axis(displayParam, field, strUnit, txtEvol, txtField,
-                     txt_title_format)
+    title_and_y_axis(displayParam, strUnit, txtEvol, txtField,
+                     "%s %s\n (Source: Johns Hopkins University)")
 
-    png_format = "%s_evolCovid19_%s_%s_for_%s.png"
-    file_yscale(displayParam, figures_path, png_format, txtEvol, txtField, yscale, zone)
+    file_yscale(displayParam, figures_path, "%s_evolCovid19_%s_%s_for_%s.png",
+                txtEvol, txtField, yscale, zone)
     return displayParam
 
 

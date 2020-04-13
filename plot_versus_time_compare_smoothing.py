@@ -135,12 +135,12 @@ def setDisplayParam(field,evolutionType,yscale,figures_path):
     strUnit, txtField = unit_and_field(field)
     txtEvol = txt_evol(evolutionType)
 
-    txt_title_format = "%s %s\n (Source: Johns Hopkins University)"
-    title_and_y_axis(displayParam, field, strUnit, txtEvol, txtField,
-                     txt_title_format)
+    title_and_y_axis(displayParam, strUnit, txtEvol, txtField,
+                     "%s %s\n (Source: Johns Hopkins University)")
 
-    png_format = "%s_evolCovid19_%s_%s_with_without_smooth.png"
-    file_yscale(displayParam, figures_path, png_format, txtEvol, txtField, yscale, None)
+    file_yscale(displayParam, figures_path,
+                "%s_evolCovid19_%s_%s_with_without_smooth.png", txtEvol,
+                txtField, yscale, None)
     return displayParam
 
 
@@ -176,7 +176,7 @@ def main():
     vSmoothing = [5,3]  # [window size,order of fitting polynomial]
     ################ Parameters to define manually ######################
 
-    dataParam = load_data(path, start_date=startDate)
+    data = load_data(path, start_date=startDate)
     displayParam = setDisplayParam(field,evolutionType,yscale,figures_path)
     fitParam = (fittingPeriod, extrapol_period_by_field[field], iExtrapol)
 
@@ -189,8 +189,8 @@ def main():
     areas = ["US", "Italy", "Spain", "Germany", "France"]
 
     for area in areas:
-        quar_date = dataParam['Confinement'].get(area, '1/1/99')
-        plot_country(area, dataParam, fitParam, quar_date, ax,
+        quar_date = data['Confinement'].get(area, '1/1/99')
+        plot_country(area, data, fitParam, quar_date, ax,
                      field, evolutionType, vSmoothing,yscale)
 
     for lax in ax:

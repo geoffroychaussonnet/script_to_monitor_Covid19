@@ -61,18 +61,18 @@ def plot_phase_country(area, data, quar_date, ax, field, smoothing, y_scale):
         ax.scatter(sgrad[quar_indices][0], scurv[quar_indices][0], c=col, s=300,
                    marker="X")
 
-def setDisplayParam(field,evolutionType,yscale,zone,figures_path):
+def setDisplayParam(field, yscale, zone, figures_path):
     displayParam = {}
 
     strUnit, txtField = unit_and_field(field)
     txtEvol = "Phase portrait from"
 
-    txt_title_format = "%s %s\n (Source: Johns Hopkins University)"
-    title_and_y_axis(displayParam, field, strUnit, txtEvol, txtField,
-                     txt_title_format)
+    title_and_y_axis(displayParam, strUnit, txtEvol, txtField,
+                     "%s %s\n (Source: Johns Hopkins University)")
 
-    png_format = "%s_phase_diagram_Covid19_%s_%s_for_%s.png"
-    file_yscale(displayParam, figures_path, png_format, txtEvol, txtField, yscale, zone)
+    file_yscale(displayParam, figures_path,
+                "%s_phase_diagram_Covid19_%s_%s_for_%s.png", txtEvol, txtField,
+                yscale, zone)
     return displayParam
 
 
@@ -119,8 +119,8 @@ def main():
 
 
     # Initialisation
-    dataParam = load_data(path, start_date=startDate)
-    displayParam = setDisplayParam(field,evolutionType,yscale,zone,figures_path)
+    data = load_data(path, start_date=startDate)
+    displayParam = setDisplayParam(field, yscale, zone, figures_path)
 
     # Set graphic objects
     close(1)
@@ -135,8 +135,8 @@ def main():
         areas = ["World"]
 
     for area in areas:
-        quar_date = dataParam['Confinement'].get(area, '1/1/99')
-        plot_phase_country(area, dataParam, quar_date, ax,
+        quar_date = data['Confinement'].get(area, '1/1/99')
+        plot_phase_country(area, data, quar_date, ax,
                            field, vSmoothing, yscale)
 
     # Add graph decorations

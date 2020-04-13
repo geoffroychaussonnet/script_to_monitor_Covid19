@@ -242,7 +242,7 @@ def setDisplayParam(field,evolutionType,yscale,figures_path):
     txtEvol = txt_evol(evolutionType)
 
     txt_title_format = "%s %s in some Western countries\n (Source: Johns Hopkins University)"
-    title_and_y_axis(displayParam, field, strUnit, txtEvol, txtField,
+    title_and_y_axis(displayParam, strUnit, txtEvol, txtField,
                      txt_title_format)
 
     png_format = "%s_Covid19_scatter_curvature_vs_period_%s_%s.png"
@@ -277,14 +277,14 @@ def main():
 
     vSmoothing = [7,3]  # [window size,order of fitting polynomial]
     ################ Parameters to define manually ######################
-    dataParam = load_data(path, start_date=startDate)
+    data = load_data(path, start_date=startDate)
     displayParam = setDisplayParam(field,evolutionType,yscale,figures_path)
 
     close(1)
     fig = figure(num=1,figsize=(10,6))
     ax = fig.add_subplot(111)
 
-    scatter_curvature_vs_x_world(dataParam, ax, field,
+    scatter_curvature_vs_x_world(data, ax, field,
                                  evolutionType,
                                  vSmoothing)
 
