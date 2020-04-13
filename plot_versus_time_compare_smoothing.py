@@ -19,7 +19,7 @@ from covid_utils import *
 
 
 ######################## Definition of Functions ############################
-from covid_utils import extrapol_period_by_field
+from covid_utils import extrapol_period_by_field, file_name
 
 
 def get_trend(dates,evol1,fitParam,extParam):
@@ -129,7 +129,8 @@ def plot_country(area, dataParam, fitParam, quar_date, ax, field,
         ax[1].semilogy(xextrapol,yextrapol,ls='-',lw=2.0,c=col)
         ax[1].annotate(strRate, xy=(xextrapol[-1],yextrapol[-1]), xytext=(3, 3), textcoords="offset points", ha='center', va='bottom',color=col,weight='bold')
 
-def setDisplayParam(field,evolutionType,yscale,figures_path):
+
+def setDisplayParam(field, evolutionType, figures_path):
     displayParam = {}
 
     strUnit, txtField = unit_and_field(field)
@@ -138,9 +139,10 @@ def setDisplayParam(field,evolutionType,yscale,figures_path):
     title_and_y_axis(displayParam, strUnit, txtEvol, txtField,
                      "%s %s\n (Source: Johns Hopkins University)")
 
-    file_yscale(displayParam, figures_path,
-                "%s_evolCovid19_%s_%s_with_without_smooth.png", txtEvol,
-                txtField, yscale, None)
+    name = file_name(figures_path,
+                      "%s_evolCovid19_%s_%s_with_without_smooth.png",
+                     txtEvol, txtField)
+    displayParam['FileName'] = name
     return displayParam
 
 
@@ -176,8 +178,10 @@ def main():
     vSmoothing = [5,3]  # [window size,order of fitting polynomial]
     ################ Parameters to define manually ######################
 
+    # Initialisation
+    ensure_figures_directory_exists(figures_path)
     data = load_data(path, start_date=startDate)
-    displayParam = setDisplayParam(field,evolutionType,yscale,figures_path)
+    displayParam = setDisplayParam(field, evolutionType, figures_path)
     fitParam = (fittingPeriod, extrapol_period_by_field[field], iExtrapol)
 
     close(1)

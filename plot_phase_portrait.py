@@ -16,6 +16,7 @@ from covid_utils import *
 # Argument 6: axis (matplotlib object) where to plot the curves
 
 ######################## Definition of Functions (BEGIN) ############################
+from covid_utils import file_name
 
 
 def plot_phase_country(area, data, quar_date, ax, field, smoothing, y_scale):
@@ -61,7 +62,8 @@ def plot_phase_country(area, data, quar_date, ax, field, smoothing, y_scale):
         ax.scatter(sgrad[quar_indices][0], scurv[quar_indices][0], c=col, s=300,
                    marker="X")
 
-def setDisplayParam(field, yscale, zone, figures_path):
+
+def setDisplayParam(field, zone, figures_path):
     displayParam = {}
 
     strUnit, txtField = unit_and_field(field)
@@ -70,9 +72,9 @@ def setDisplayParam(field, yscale, zone, figures_path):
     title_and_y_axis(displayParam, strUnit, txtEvol, txtField,
                      "%s %s\n (Source: Johns Hopkins University)")
 
-    file_yscale(displayParam, figures_path,
-                "%s_phase_diagram_Covid19_%s_%s_for_%s.png", txtEvol, txtField,
-                yscale, zone)
+    name = file_name(figures_path, "%s_phase_diagram_Covid19_%s_%s_for_%s.png",
+                     txtEvol, txtField, zone)
+    displayParam['FileName'] = name
     return displayParam
 
 
@@ -119,8 +121,9 @@ def main():
 
 
     # Initialisation
+    ensure_figures_directory_exists(figures_path)
     data = load_data(path, start_date=startDate)
-    displayParam = setDisplayParam(field, yscale, zone, figures_path)
+    displayParam = setDisplayParam(field, zone, figures_path)
 
     # Set graphic objects
     close(1)
@@ -141,7 +144,7 @@ def main():
 
     # Add graph decorations
     ax.set_title(displayParam['title'])
-    ax.set_yscale(displayParam['YScale'])
+    ax.set_yscale(yscale)
     ax.set_xlabel(r'Gradient [new case/day]')
     ax.set_ylabel(r'Curvature [new case/day$^2$]')
     ax.legend(loc=2)

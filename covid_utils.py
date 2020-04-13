@@ -197,22 +197,36 @@ def txt_evol(evolutionType):
 def title_and_y_axis(displayParam, strUnit, txtEvol, txtField,
                      txt_title_format):
     txtTitle = txt_title_format % (txtEvol, txtField)
-    txtYaxis = "%s %s %s" % (txtEvol, txtField, strUnit)
     displayParam['title'] = txtTitle
+    txtYaxis = "%s %s %s" % (txtEvol, txtField, strUnit)
     displayParam['YaxisLabel'] = txtYaxis
 
 
-def file_yscale(displayParam, figures_path, png_format, txtEvol, txtField, yscale, zone):
-    strDateToday = dt.date.today().strftime("%Y%m%d")
-    Path(figures_path).mkdir(parents=True, exist_ok=True)
+def file_name(figures_path, png_format, txt_evol, txt_field, zone=None,
+              str_date_today=dt.date.today().strftime("%Y%m%d")):
+    """
+    Create the directoy if necessary.
+
+    :param figures_path:
+    :param png_format:
+    :param txt_evol:
+    :param txt_field:
+    :param zone:
+    :param str_date_today: date of today YYYYMMDD
+    :return:
+    """
     if zone:
-        fname = figures_path + "/" + png_format % (
-        strDateToday, txtEvol, txtField, zone)
+        fname = png_format % (str_date_today, txt_evol, txt_field, zone)
     else:
-        fname = figures_path + "/" + png_format % (
-            strDateToday, txtEvol, txtField)
-    displayParam['FileName'] = fname.replace(" ", "_")
-    displayParam['YScale'] = yscale
+        fname = png_format % (str_date_today, txt_evol, txt_field)
+    fullpath = str(Path(figures_path, fname))
+    return fullpath.replace(" ", "_")
+
+
+def ensure_figures_directory_exists(figures_path):
+    path = Path(figures_path)
+    if not path.exists():
+        path.mkdir(parents=True, exist_ok=True)
 
 
 def parse_confinement(file):

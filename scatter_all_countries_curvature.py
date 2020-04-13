@@ -3,7 +3,8 @@
 from pylab import *
 from pathlib import Path
 from covid_utils import *
-from covid_utils import unit_and_field, txt_evol
+from covid_utils import unit_and_field, txt_evol, file_name
+
 
 ############### Basic use #############################
 # example: plot_country("France",dataParam,fitParam,'3/17/20',ax)
@@ -235,7 +236,7 @@ def plot_country(strCountry, data, fitParam, quar_date, ax,
         ax.annotate(strRate, xy=(xextrapol[-1],yextrapol[-1]), xytext=(3, 3), textcoords="offset points", ha='center', va='bottom',color=col,weight='bold')
 
 
-def setDisplayParam(field,evolutionType,yscale,figures_path):
+def setDisplayParam(field, evolutionType, figures_path):
     displayParam = {}
 
     strUnit, txtField = unit_and_field(field)
@@ -246,7 +247,8 @@ def setDisplayParam(field,evolutionType,yscale,figures_path):
                      txt_title_format)
 
     png_format = "%s_Covid19_scatter_curvature_vs_period_%s_%s.png"
-    file_yscale(displayParam, figures_path, png_format, txtEvol, txtField, yscale, None)
+    name = file_name(figures_path, png_format, txtEvol, txtField)
+    displayParam['FileName'] = name
     return displayParam
 
 
@@ -277,8 +279,11 @@ def main():
 
     vSmoothing = [7,3]  # [window size,order of fitting polynomial]
     ################ Parameters to define manually ######################
+
+    # Initialisation
+    ensure_figures_directory_exists(figures_path)
     data = load_data(path, start_date=startDate)
-    displayParam = setDisplayParam(field,evolutionType,yscale,figures_path)
+    displayParam = setDisplayParam(field, evolutionType, figures_path)
 
     close(1)
     fig = figure(num=1,figsize=(10,6))

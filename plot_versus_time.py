@@ -16,7 +16,7 @@ from covid_utils import *
 # Argument 6: axis (matplotlib object) where to plot the curves
 
 ######################## Definition of Functions (BEGIN) ############################
-from covid_utils import extrapol_period_by_field
+from covid_utils import extrapol_period_by_field, file_name
 
 
 def get_trend(dates,evol1,fitParam,extParam):
@@ -118,7 +118,8 @@ def plot_country(area, data, fitParam, quar_date, ax, field,
         ax.semilogy(xextrapol,yextrapol,ls='-',lw=2.0,c=col)
         ax.annotate(strRate, xy=(xextrapol[-1],yextrapol[-1]), xytext=(3, 3), textcoords="offset points", ha='center', va='bottom',color=col,weight='bold')
 
-def setDisplayParam(field,evolutionType,yscale,zone,figures_path):
+
+def setDisplayParam(field, evolutionType, zone, figures_path):
     displayParam = {}
 
     strUnit, txtField = unit_and_field(field)
@@ -127,8 +128,9 @@ def setDisplayParam(field,evolutionType,yscale,zone,figures_path):
     title_and_y_axis(displayParam, strUnit, txtEvol, txtField,
                      "%s %s\n (Source: Johns Hopkins University)")
 
-    file_yscale(displayParam, figures_path, "%s_evolCovid19_%s_%s_for_%s.png",
-                txtEvol, txtField, yscale, zone)
+    name = file_name(figures_path, "%s_evolCovid19_%s_%s_for_%s.png", txtEvol,
+                     txtField, zone)
+    displayParam['FileName'] = name
     return displayParam
 
 
@@ -171,8 +173,9 @@ def main():
     ################ Parameters to define manually (END) ######################
 
     # Initialisation
+    ensure_figures_directory_exists(figures_path)
     data = load_data(path, start_date=startDate)
-    displayParam = setDisplayParam(field,evolutionType,yscale,zone,figures_path)
+    displayParam = setDisplayParam(field, evolutionType, zone, figures_path)
     fitParam = (fittingPeriod, extrapol_period_by_field[field], iExtrapol)
 
     # Set graphic objects
@@ -196,7 +199,7 @@ def main():
     if evolutionType == "R0":
         ax.axhline(1)
     ax.set_title(displayParam['title'])
-    ax.set_yscale(displayParam['YScale'])
+    ax.set_yscale(yscale)
     ax.set_xlabel("Date")
     ax.xaxis.set_major_locator(ticker.MultipleLocator(daysInterval))
     ax.xaxis.set_minor_locator(ticker.MultipleLocator(1))
