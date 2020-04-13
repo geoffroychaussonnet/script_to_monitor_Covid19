@@ -53,23 +53,20 @@ def get_trend(dates,evol1,fitParam,extParam):
     return xcorrel1, correl1, strRate
 
 
-def scatter_curvature_vs_X_World(strCountry, dataParam,displayParam,fitParam,quarParam,ax):
+def scatter_curvature_vs_X_World(dataParam, ax, field, evolution_type,
+                                 filter_date, smoothing):
     print("########## Treating World #############")
-    quarDate = quarParam
-    fittingPeriod = fitParam[0]
-    extrapolPeriod = fitParam[1]
-    iExtrapol = fitParam[2]
 
     lstDoneCountry = []
     matCountry = []
-    for strCountry in dataParam["Confirmed"]["Country/Region"]:
-        if strCountry not in lstDoneCountry:
-            lstDoneCountry.append(strCountry)
-            evol1 = evolution_country(strCountry, dataParam,
-                                      displayParam['Field'],
-                                      dataParam['EvolutionType'],
-                                      dataParam['FilterDate'],
-                                      dataParam['Smoothing'])
+    for area in dataParam["Confirmed"]["Country/Region"]:
+        if area not in lstDoneCountry:
+            lstDoneCountry.append(area)
+            evol1 = evolution_country(area, dataParam,
+                                      field,
+                                      evolution_type,
+                                      filter_date,
+                                      smoothing)
             matCountry.append(evol1)
 
     periodX = []
@@ -77,20 +74,80 @@ def scatter_curvature_vs_X_World(strCountry, dataParam,displayParam,fitParam,qua
     gradY = []
     totPop = []
     lstFoundCountry = []
-    for strCountry,evol0 in zip(lstDoneCountry,matCountry):
-        check = (evol0>100)
-        evol = savgol_filter(evol0, dataParam['Smoothing'][0], dataParam['Smoothing'][1]) # arg2: window size; arg3:  polynomial order 
+    for area, evol0 in zip(lstDoneCountry, matCountry):
+        check = (evol0 > 100)
+        window_length, polyorder = smoothing
+        evol = savgol_filter(evol0, window_length, polyorder)
 
         locPeriod = sum(check)
-        if locPeriod>2:
+        if locPeriod > 2:
+            periodX.append(sum(check))
+            curvature = np.diff(evol[check], 2).mean()
+            gradient = np.diff(evol[check], 1).mean()
+            curvY.append(curvature)
+            gradY.append(gradient)
+            lstFoundCountry.append(area)
+            totPop.append(evol0[-1])
+            print(area, locPeriod, curvature)
+
+    periodX = np.array(periodX)
+    curvY = np.array(curvY)
+    totPop = np.array(totPop)
+    gradY = np.array(gradY)
+
+    col1 = 'black'
+    col2 = 'green'
+    posi = (curvY > 0)
+
+    xaxis = periodX
+    xaxis = totPop
+    xaxis = gradY
+
+    ax.scatter(xaxis[posi],curvY[posi], color=col1)
+    ax.scatter(xaxis[np.invert(posi)], -curvY[np.invert(posi)], color=col2)
+    for cntry,x,y in zip(lstFoundCountry,xaxis,curvY):
+        if y>0:
+            ax.annotate(cntry, xy=(x,y), xytext=(3, 3), textcoords="offset points", ha='center', va='bottom',color=col1,weight='bold')
+        else:
+            ax.annotate(cntry, xy=(x,-y), xytext=(3, 3), textcoords="offset points", ha='center', va='bottom',color=col2,weight='bold')
+
+
+def plot_curvature_vs_gradient(area, dataParam, displayParam, ax, field,
+                               evolution_type, filter_date, smoothing):
+    print("########## Treating country: ", area, " #############")
+
+    lstDoneCountry = []
+    matCountry = []
+    for area in dataParam["Confirmed"]["Country/Region"]:
+        if area not in lstDoneCountry:
+            lstDoneCountry.append(area)
+            evol1 = evolution_country(area, dataParam,
+                                      field,
+                                      evolution_type,
+                                      filter_date,
+                                      smoothing)
+            matCountry.append(evol1)
+
+    periodX = []
+    curvY = []
+    gradY = []
+    totPop = []
+    lstFoundCountry = []
+    for area, evol0 in zip(lstDoneCountry, matCountry):
+        check = (evol0 > 100)
+        window_length, polyorder = smoothing
+        evol = savgol_filter(evol0, window_length, polyorder)
+
+        locPeriod = sum(check)
+        if locPeriod > 2:
             periodX.append(sum(check))
             curvature = np.diff(evol[check],2).mean()
             gradient = np.diff(evol[check],1).mean()
             curvY.append(curvature)
             gradY.append(gradient)
-            lstFoundCountry.append(strCountry)
+            lstFoundCountry.append(area)
             totPop.append(evol0[-1])
-            print(strCountry, locPeriod, curvature)
+            print(area, locPeriod, curvature)
 
     periodX = np.array(periodX)
     curvY = np.array(curvY)
@@ -113,91 +170,30 @@ def scatter_curvature_vs_X_World(strCountry, dataParam,displayParam,fitParam,qua
         else:
             ax.annotate(cntry, xy=(x,-y), xytext=(3, 3), textcoords="offset points", ha='center', va='bottom',color=col2,weight='bold')
 
-def plot_curvature_vs_gradient(strCountry,dataParam,displayParam,fitParam,quarParam,ax):
+
+def plot_country(strCountry, dataParam, fitParam, quar_date, ax,
+                 field, evolution_type, filter_date, smoothing, y_scale):
     print("########## Treating country: ", strCountry, " #############")
-    quarDate = quarParam
-    fittingPeriod = fitParam[0]
-    extrapolPeriod = fitParam[1]
-    iExtrapol = fitParam[2]
-
-    lstDoneCountry = []
-    matCountry = []
-    for strCountry in dataParam["Confirmed"]["Country/Region"]:
-        if strCountry not in lstDoneCountry:
-            lstDoneCountry.append(strCountry)
-            evol1 = evolution_country(strCountry, dataParam,
-                                      displayParam['Field'],
-                                      dataParam['EvolutionType'],
-                                      dataParam['FilterDate'],
-                                      dataParam['Smoothing'])
-            matCountry.append(evol1)
-
-    periodX = []
-    curvY = []
-    gradY = []
-    totPop = []
-    lstFoundCountry = []
-    for strCountry,evol0 in zip(lstDoneCountry,matCountry):
-        check = (evol0>100)
-        evol = savgol_filter(evol0, dataParam['Smoothing'][0], dataParam['Smoothing'][1]) # arg2: window size; arg3:  polynomial order 
-
-        locPeriod = sum(check)
-        if locPeriod>2:
-            periodX.append(sum(check))
-            curvature = np.diff(evol[check],2).mean()
-            gradient = np.diff(evol[check],1).mean()
-            curvY.append(curvature)
-            gradY.append(gradient)
-            lstFoundCountry.append(strCountry)
-            totPop.append(evol0[-1])
-            print(strCountry, locPeriod, curvature)
-
-    periodX = np.array(periodX)
-    curvY = np.array(curvY)
-    totPop = np.array(totPop)
-    gradY = np.array(gradY)
-
-    col1 = 'black'
-    col2 = 'green'
-    posi = (curvY>0)
-
-    xaxis = periodX
-    xaxis = totPop
-    xaxis = gradY
-
-    ax.scatter(xaxis[posi],curvY[posi],color=col1)
-    ax.scatter(xaxis[np.invert(posi)],-curvY[np.invert(posi)],color=col2)
-    for cntry,x,y in zip(lstFoundCountry,xaxis,curvY):
-        if y>0:
-            ax.annotate(cntry, xy=(x,y), xytext=(3, 3), textcoords="offset points", ha='center', va='bottom',color=col1,weight='bold')
-        else:
-            ax.annotate(cntry, xy=(x,-y), xytext=(3, 3), textcoords="offset points", ha='center', va='bottom',color=col2,weight='bold')
-
-def plot_country(strCountry,dataParam,displayParam,fitParam,quarParam,ax):
-    print("########## Treating country: ", strCountry, " #############")
-    quarDate = quarParam
-    fittingPeriod = fitParam[0]
-    extrapolPeriod = fitParam[1]
-    iExtrapol = fitParam[2]
+    quar_date = dateIn(quar_date)
+    fittingPeriod, extrapolPeriod, iExtrapol = fitParam
 
     # Extract evolution for this country
-    evol1 = evolution_country(strCountry, dataParam, displayParam['Field'],
-                              dataParam['EvolutionType'],
-                              dataParam['FilterDate'], dataParam['Smoothing'])
+    evol1 = evolution_country(strCountry, dataParam, field, evolution_type,
+                              filter_date, smoothing)
 
     # find the quarantine date 
-    iQuar = np.where(dataParam['Dates']>=dateIn(quarDate))
-    iQuar = dataParam['Dates']>=dateIn(quarDate)
+    dates = dataParam['Dates']
+    iQuar = dates >= quar_date
 
     fitParam1 = []
     extParam1 = []
     # Define the period for the trend
     if sum(iQuar) > 3: # Quarantine found
-        dtFitEnd = dateIn(quarDate)
+        dtFitEnd = quar_date
 
         fitParam2 = []
         extParam2 = []
-        fitParam2.append(dateIn(quarDate))
+        fitParam2.append(quar_date)
         fitParam2.append(dt.date.today() - dt.timedelta(days=1))
         extParam2.append(dtFitEnd)
         extParam2.append(dtFitEnd + dt.timedelta(days=extrapolPeriod+1))
@@ -211,29 +207,32 @@ def plot_country(strCountry,dataParam,displayParam,fitParam,quarParam,ax):
     extParam1.append(dtExtBeg)
     extParam1.append(dtExtEnd)
 
-    if dataParam['Smoothing'][0] != 0:
-        evol1 = savgol_filter(evol1, dataParam['Smoothing'][0], dataParam['Smoothing'][1]) # arg2: window size; arg3:  polynomial order 
+    window_length, polyorder = smoothing
+    if window_length != 0:
+        evol1 = savgol_filter(evol1, window_length, polyorder)
 
-    if displayParam['YScale'] == 'log':
+    if y_scale == 'log':
         evol1 = np.ma.masked_where(evol1<=0,evol1)
-    p = ax.semilogy(dataParam['DateAxis'],evol1,ls='-',lw=4.0,label=strCountry)
+    date_axis = dataParam['DateAxis']
+    p = ax.semilogy(date_axis, evol1, ls='-', lw=4.0, label=strCountry)
     col = p[0].get_color()
 
     if sum(iQuar) > 0: # Quarantine found
         # Plot the quarantine date
-        ax.scatter(dataParam['DateAxis'][iQuar][0],evol1[iQuar][0],c=col,s=300,marker="X")
+        ax.scatter(date_axis[iQuar][0], evol1[iQuar][0], c=col, s=300, marker="X")
 
     if (iExtrapol==0): return
 
     # Get the trend
-    xextrapol, yextrapol, strRate = get_trend(dataParam['Dates'],evol1,fitParam1,extParam1)
+    xextrapol, yextrapol, strRate = get_trend(dates, evol1, fitParam1, extParam1)
     ax.semilogy(xextrapol,yextrapol,ls='--',lw=2.0,c=col)
     ax.annotate(strRate, xy=(xextrapol[-1],yextrapol[-1]), xytext=(3, 3), textcoords="offset points", ha='center', va='bottom',color=col,weight='bold')
 
     if sum(iQuar) > 3: # Quarantine found
-        xextrapol, yextrapol, strRate = get_trend(dataParam['Dates'],evol1,fitParam2,extParam2)
+        xextrapol, yextrapol, strRate = get_trend(dates, evol1, fitParam2, extParam2)
         ax.semilogy(xextrapol,yextrapol,ls='-',lw=2.0,c=col)
         ax.annotate(strRate, xy=(xextrapol[-1],yextrapol[-1]), xytext=(3, 3), textcoords="offset points", ha='center', va='bottom',color=col,weight='bold')
+
 
 def setDisplayParam(field,evolutionType,yscale,figures_path):
     displayParam = {}
@@ -285,7 +284,10 @@ def main():
     fig = figure(num=1,figsize=(10,6))
     ax = fig.add_subplot(111)
 
-    scatter_curvature_vs_X_World("World",dataParam,displayParam,fitParam,'3/22/21',ax)
+    scatter_curvature_vs_X_World(dataParam, ax, displayParam['Field'],
+                                 dataParam['EvolutionType'],
+                                 dataParam['FilterDate'],
+                                 dataParam['Smoothing'])
 
     #ax.set_title(displayParam['title'])
     ax.set_xscale(displayParam['YScale'])
