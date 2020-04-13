@@ -57,31 +57,30 @@ def get_trend(dates,evol1,fitParam,extParam):
     return xcorrel1, correl1, strRate
 
 
-def plot_country(strCountry,dataParam,displayParam,fitParam,quarParam,ax):
-    print("########## Treating country: %12s ###########" %strCountry)
-    quarDate = quarParam
-    fittingPeriod = fitParam[0]
-    extrapolPeriod = fitParam[1]
-    iExtrapol = fitParam[2]
+def plot_country(area, dataParam, fitParam, quar_date, ax, field,
+                 evolution_type, filter_date, smoothing, y_scale):
+    print("########## Treating country: %12s ###########" % area)
+    quar_date = dateIn(quar_date)
+    fittingPeriod, extrapolPeriod, iExtrapol = fitParam
 
     # Extract evolution for this country
-    evol1 = evolution_country(strCountry, dataParam, displayParam['Field'],
-                              dataParam['EvolutionType'],
-                              dataParam['FilterDate'], dataParam['Smoothing'])
+    evol1 = evolution_country(area, dataParam, field,
+                              evolution_type,
+                              filter_date, smoothing)
 
     # find the quarantine date 
-    iQuar = np.where(dataParam['Dates']>=dateIn(quarDate))
-    iQuar = dataParam['Dates']>=dateIn(quarDate)
+    dates = dataParam['Dates']
+    iQuar = dates >= quar_date
 
     fitParam1 = []
     extParam1 = []
     # Define the period for the trend
     if sum(iQuar) > 3: # Quarantine found
-        dtFitEnd = dateIn(quarDate)
+        dtFitEnd = quar_date
 
         fitParam2 = []
         extParam2 = []
-        fitParam2.append(dateIn(quarDate))
+        fitParam2.append(quar_date)
         fitParam2.append(dt.date.today() - dt.timedelta(days=1))
         extParam2.append(dtFitEnd)
         extParam2.append(dtFitEnd + dt.timedelta(days=extrapolPeriod+1))
@@ -95,31 +94,33 @@ def plot_country(strCountry,dataParam,displayParam,fitParam,quarParam,ax):
     extParam1.append(dtExtBeg)
     extParam1.append(dtExtEnd)
 
-    evol1s = savgol_filter(evol1, dataParam['Smoothing'][0], dataParam['Smoothing'][1]) # arg2: window size; arg3:  polynomial order 
+    window_length, polyorder = smoothing
+    evol1s = savgol_filter(evol1, window_length, polyorder)
 
-    if displayParam['YScale'] == 'log':
+    if y_scale == 'log':
         evol1 = np.ma.masked_where(evol1<=0,evol1)
         evol1s = np.ma.masked_where(evol1s<=0,evol1s)
-    p = ax[0].semilogy(dataParam['DateAxis'],evol1s,ls='-',lw=4.0,label=strCountry)
+    date_axis = dataParam['DateAxis']
+    p = ax[0].semilogy(date_axis, evol1s, ls='-', lw=4.0, label=area)
     col = p[0].get_color()
-    ax[1].semilogy(dataParam['DateAxis'],evol1,ls='-',lw=4.0,label=strCountry)
+    ax[1].semilogy(date_axis, evol1, ls='-', lw=4.0, label=area)
 
     if sum(iQuar) > 0: # Quarantine found
         # Plot the quarantine date
-        ax[0].scatter(dataParam['DateAxis'][iQuar][0],evol1[iQuar][0],c=col,s=300,marker="X")
-        ax[1].scatter(dataParam['DateAxis'][iQuar][0],evol1[iQuar][0],c=col,s=300,marker="X")
+        ax[0].scatter(date_axis[iQuar][0], evol1[iQuar][0], c=col, s=300, marker="X")
+        ax[1].scatter(date_axis[iQuar][0], evol1[iQuar][0], c=col, s=300, marker="X")
 
     if (iExtrapol==0): return
 
     # Get the trend
-    xextrapol, yextrapol, strRate = get_trend(dataParam['Dates'],evol1,fitParam1,extParam1)
+    xextrapol, yextrapol, strRate = get_trend(dates, evol1, fitParam1, extParam1)
     ax[0].semilogy(xextrapol,yextrapol,ls='--',lw=2.0,c=col)
     ax[1].semilogy(xextrapol,yextrapol,ls='--',lw=2.0,c=col)
     ax[0].annotate(strRate, xy=(xextrapol[-1],yextrapol[-1]), xytext=(3, 3), textcoords="offset points", ha='center', va='bottom',color=col,weight='bold')
     ax[1].annotate(strRate, xy=(xextrapol[-1],yextrapol[-1]), xytext=(3, 3), textcoords="offset points", ha='center', va='bottom',color=col,weight='bold')
 
     if sum(iQuar) > 3: # Quarantine found
-        xextrapol, yextrapol, strRate = get_trend(dataParam['Dates'],evol1,fitParam2,extParam2)
+        xextrapol, yextrapol, strRate = get_trend(dates, evol1, fitParam2, extParam2)
         ax[0].semilogy(xextrapol,yextrapol,ls='-',lw=2.0,c=col)
         ax[0].annotate(strRate, xy=(xextrapol[-1],yextrapol[-1]), xytext=(3, 3), textcoords="offset points", ha='center', va='bottom',color=col,weight='bold')
         ax[1].semilogy(xextrapol,yextrapol,ls='-',lw=2.0,c=col)
@@ -186,7 +187,10 @@ def main():
 
     for area in areas:
         quar_date = dataParam['Confinement'].get(area, '1/1/99')
-        plot_country(area, dataParam, displayParam, fitParam, quar_date, ax)
+        plot_country(area, dataParam, fitParam, quar_date, ax,
+                     displayParam['Field'], dataParam['EvolutionType'],
+                     dataParam['FilterDate'], dataParam['Smoothing'],
+                     displayParam['YScale'])
 
     for lax in ax:
         if dataParam['EvolutionType'] == "R0": lax.axhline(1)
