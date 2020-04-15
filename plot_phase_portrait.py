@@ -18,7 +18,7 @@ from covid_utils import *
 ######################## Definition of Functions (BEGIN) ############################
 
 def plot_phase_country(strCountry,dataParam,displayParam,fitParam,quarParam,ax):
-    print("########## Treating country: %12s ###########" %strCountry)
+    print("########## Treating country: %18s ###########" %('{0:^18}'.format(strCountry)))
     quarDate = quarParam
     fittingPeriod = fitParam[0]
     extrapolPeriod = fitParam[1]

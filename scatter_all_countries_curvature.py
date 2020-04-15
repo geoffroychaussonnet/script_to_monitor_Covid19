@@ -54,7 +54,7 @@ def get_trend(dates,evol1,fitParam,extParam):
 
 
 def scatter_curvature_vs_X_World(strCountry, dataParam,displayParam,fitParam,quarParam,ax):
-    print("########## Treating World #############")
+    print("########## Treating country: %18s ###########" %('{0:^18}'.format("World")))
     quarDate = quarParam
     fittingPeriod = fitParam[0]
     extrapolPeriod = fitParam[1]
@@ -110,7 +110,7 @@ def scatter_curvature_vs_X_World(strCountry, dataParam,displayParam,fitParam,qua
             ax.annotate(cntry, xy=(x,-y), xytext=(3, 3), textcoords="offset points", ha='center', va='bottom',color=col2,weight='bold')
 
 def plot_curvature_vs_gradient(strCountry,dataParam,displayParam,fitParam,quarParam,ax):
-    print("########## Treating country: ", strCountry, " #############")
+    print("########## Treating country: %18s ###########" %('{0:^18}'.format(strCountry)))
     quarDate = quarParam
     fittingPeriod = fitParam[0]
     extrapolPeriod = fitParam[1]
@@ -166,7 +166,7 @@ def plot_curvature_vs_gradient(strCountry,dataParam,displayParam,fitParam,quarPa
             ax.annotate(cntry, xy=(x,-y), xytext=(3, 3), textcoords="offset points", ha='center', va='bottom',color=col2,weight='bold')
 
 def plot_country(strCountry,dataParam,displayParam,fitParam,quarParam,ax):
-    print("########## Treating country: ", strCountry, " #############")
+    print("########## Treating country: %18s ###########" %('{0:^18}'.format(strCountry)))
     quarDate = quarParam
     fittingPeriod = fitParam[0]
     extrapolPeriod = fitParam[1]

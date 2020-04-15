@@ -58,7 +58,7 @@ def get_trend(dates,evol1,fitParam,extParam):
 
 
 def plot_country(strCountry,dataParam,displayParam,fitParam,quarParam,ax):
-    print("########## Treating country: %12s ###########" %strCountry)
+    print("########## Treating country: %18s ###########" %('{0:^18}'.format(strCountry)))
     quarDate = quarParam
     fittingPeriod = fitParam[0]
     extrapolPeriod = fitParam[1]
