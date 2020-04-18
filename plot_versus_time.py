@@ -139,12 +139,11 @@ def setDisplayParam(field, evolutionType, zone, figures_path):
 
 def main():
     # Path to the folder containing the time series:
-    path="https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/"
+    data_path="https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/"
     figures_path = "../FIGURES"
-    daysInterval = 7   # To set Major x-axis
-    startDate = datetime.date(2020, 3,1)   # Start date of the plot:
-    extrapolPeriod = 14     # How many days to extrapolate?
-    fittingPeriod = 8       # On how long do we fit the data?
+    days_interval = 7   # To set Major x-axis
+    start_date = datetime.date(2020, 3, 1)   # Start date of the plot:
+    fitting_period = 8       # On how long do we fit the data?
 
     yscale = 'linear'
     #yscale = 'log'
@@ -156,17 +155,17 @@ def main():
     #field = "DeathRate"
 
     # Type of evolution:
-    #evolutionType = "cumulative"
-    evolutionType = "daily"
-    #evolutionType = "curvature"
-    #evolutionType = "smoothedCurvature"
-    #evolutionType = "R0"  # (Experimental)
-
-    # Extrapolate data before and after lockdown (0=no, 1=yes) 
-    iExtrapol = 0
+    #evolution_type = "cumulative"
+    evolution_type = "daily"
+    #evolution_type = "curvature"
+    #evolution_type = "smoothedCurvature"
+    #evolution_type = "R0"  # (Experimental)
 
     # Smoothing: (set window size to 0 to deactivate)
-    vSmoothing = [0,3]  # [window size,order of fitting polynomial]
+    smoothing = (0, 3)  # [window size,order of fitting polynomial]
+
+    # Extrapolate data before and after lockdown (0=no, 1=yes) 
+    extrapol = 0
 
     # Type of zones (see in the execution section)
     #zone = "continents"
@@ -174,43 +173,45 @@ def main():
     ################ Parameters to define manually (END) ######################
 
     # Initialisation
-    ensure_figures_directory_exists(figures_path)
-    data = load_data(path, start_date=startDate)
-    displayParam = setDisplayParam(field, evolutionType, zone, figures_path)
-    fitParam = (fittingPeriod, extrapol_period_by_field[field], iExtrapol)
+    main_plot(data_path, figures_path, field, evolution_type, smoothing,
+              days_interval, fitting_period, extrapol, start_date, yscale, zone)
 
+
+def main_plot(data_path, figures_path, field, evolution_type, smoothing,
+              days_interval, fitting_period, extrapol, start_date, yscale,
+              zone):
+    ensure_figures_directory_exists(figures_path)
+    data = load_data(data_path, start_date=start_date)
+    displayParam = setDisplayParam(field, evolution_type, zone, figures_path)
+    fitParam = (fitting_period, extrapol_period_by_field[field], extrapol)
     # Set graphic objects
     close(1)
-    fig = figure(num=1,figsize=(10,6))
+    fig = figure(num=1, figsize=(10, 6))
     ax = fig.add_subplot(111)
-
     if zone == "continents":
         areas = ["EU", "China", "US", "Africa"]
     elif zone == "countries":
         areas = ["US", "Italy", "Spain", "Germany", "France"]
     else:
         areas = ["World"]
-
     for area in areas:
         quar_date = data['Confinement'].get(area, '1/1/99')
-        plot_country(area, data, fitParam, quar_date, ax, field, vSmoothing,
-                     evolutionType, yscale)
-
+        plot_country(area, data, fitParam, quar_date, ax, field, smoothing,
+                     evolution_type, yscale)
     # Add graph decorations
-    if evolutionType == "R0":
+    if evolution_type == "R0":
         ax.axhline(1)
     ax.set_title(displayParam['title'])
     ax.set_yscale(yscale)
     ax.set_xlabel("Date")
-    ax.xaxis.set_major_locator(ticker.MultipleLocator(daysInterval))
+    ax.xaxis.set_major_locator(ticker.MultipleLocator(days_interval))
     ax.xaxis.set_minor_locator(ticker.MultipleLocator(1))
     ax.set_ylabel(displayParam['YaxisLabel'])
     ax.legend(loc=2)
-    ax.grid(which='major',color='grey', linestyle='-', linewidth=1)
-    ax.grid(which='minor',color='grey', linestyle='-', linewidth=0.5)
-
+    ax.grid(which='major', color='grey', linestyle='-', linewidth=1)
+    ax.grid(which='minor', color='grey', linestyle='-', linewidth=0.5)
     fig.tight_layout()
-    savefig(displayParam['FileName'],dpi=600,bbox='tight')
+    savefig(displayParam['FileName'], dpi=600, bbox='tight')
     show()
 
 

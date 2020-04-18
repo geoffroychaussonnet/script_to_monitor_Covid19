@@ -204,12 +204,9 @@ def setDisplayParam(field, evolutionType, figures_path, xaxis_type):
 def main():
     ################ Parameters to define manually ######################
     # Path to the folder containing the time series:
-    path="https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/"
+    data_path="https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/"
     figures_path = "../FIGURES"
-    daysInterval = 7   # To set Major x-axis
-    startDate = datetime.date(2020, 2,22)   # Start date of the plot:
-    extrapolPeriod = 14     # How many days to extrapolate?
-    fittingPeriod = 8       # On how long do we fit the data?
+    start_date = datetime.date(2020, 2,22)   # Start date of the plot:
 
     #yscale = 'linear'
     yscale = 'log'
@@ -219,46 +216,49 @@ def main():
     #field = "Active"
     #field = "DeathRate"
 
-    evolutionType = "cumulative"
-    #evolutionType = "daily"
+    evolution_type = "cumulative"
+    #evolution_type = "daily"
 
-    iExtrapol = 0
-
-    vSmoothing = [7,3]  # [window size,order of fitting polynomial]
+    smoothing = (7, 3)  # [window size,order of fitting polynomial]
 
     xaxis_type = "Number of days since > 100 confirmed cases [day]"
     #xaxis_type = "Gradient of total confirmed [case/day]"
     #xaxis_type = "Total confirmed cases [case]"
     ################ Parameters to define manually ######################
 
+    method_name(data_path, figures_path, field, evolution_type, smoothing,
+                xaxis_type, start_date, yscale)
+
+
+def method_name(data_path, figures_path, field, evolution_type, smoothing,
+                xaxis_type, start_date, yscale):
     # Initialisation
     ensure_figures_directory_exists(figures_path)
-    data = load_data(path, start_date=startDate)
-    displayParam = setDisplayParam(field, evolutionType, figures_path, xaxis_type)
-
+    data = load_data(data_path, start_date=start_date)
+    displayParam = setDisplayParam(field, evolution_type, figures_path,
+                                   xaxis_type)
     close(1)
-    fig = figure(num=1,figsize=(10,6))
+    fig = figure(num=1, figsize=(10, 6))
     ax = fig.add_subplot(111)
-
     scatter_curvature_vs_x_world(data, ax, field,
-                                 evolutionType,
-                                 vSmoothing,xaxis_type)
-
-    #ax.set_title(displayParam['title'])
+                                 evolution_type,
+                                 smoothing, xaxis_type)
+    # ax.set_title(displayParam['title'])
     ax.set_xscale(yscale)
     ax.set_yscale(yscale)
     ax.set_xlabel(displayParam['XaxisLabel'])
     ax.set_ylabel(displayParam['YaxisLabel'])
-    #ax.xaxis.set_major_locator(ticker.MultipleLocator(daysInterval))
-    #ax.xaxis.set_minor_locator(ticker.MultipleLocator(1))
-    #ax.set_ylabel(displayParam['YaxisLabel'])
-    #ax.legend(loc=2)
-    ax.grid(which='major',color='grey', linestyle='-', linewidth=1, zorder=-1)
-    ax.grid(which='minor',color='grey', linestyle='-', linewidth=0.5,zorder=-1)
-
+    # ax.xaxis.set_major_locator(ticker.MultipleLocator(daysInterval))
+    # ax.xaxis.set_minor_locator(ticker.MultipleLocator(1))
+    # ax.set_ylabel(displayParam['YaxisLabel'])
+    # ax.legend(loc=2)
+    ax.grid(which='major', color='grey', linestyle='-', linewidth=1, zorder=-1)
+    ax.grid(which='minor', color='grey', linestyle='-', linewidth=0.5,
+            zorder=-1)
     fig.tight_layout()
-    savefig(displayParam['FileName'],dpi=600,bbox='tight')
+    savefig(displayParam['FileName'], dpi=600, bbox='tight')
     show()
+
 
 if __name__ == "__main__":
     main()

@@ -84,13 +84,10 @@ def setDisplayParam(field, zone, figures_path):
 ############## Execution section ################
 
 def main():
-
     # Path to the folder containing the time series:
-    path="https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/"
+    data_path="https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/"
     figures_path = "../FIGURES"
-    startDate = dt.date(2020, 1,1)   # Start date of the plot:
-    extrapolPeriod = 14     # How many days to extrapolate?
-    fittingPeriod = 8       # On how long do we fit the data?
+    start_date = dt.date(2020, 1,1)   # Start date of the plot:
 
     yscale = 'linear'   # recommended for phase diagram
     #yscale = 'log'
@@ -101,58 +98,46 @@ def main():
     #field = "Active"
     #field = "DeathRate"
 
-    # Type of evolution: (not used for phase diagram)
-    evolutionType = "cumulative"
-    #evolutionType = "daily"
-    #evolutionType = "curvature"
-    #evolutionType = "smoothedCurvature"
-    #evolutionType = "R0"
-
-    # Extrapolate data before and after lockdown (0=no, 1=yes) (not used for phase_diagram)
-    iExtrapol = 0
-
     # Smoothing: (mandatory for phase diagram)
-    vSmoothing = [9,3]  # [window size,order of fitting polynomial]
+    smoothing = (9, 3)  # [window size, order of fitting polynomial]
 
     # Type of zones (see in the execution section)
-    #zone = "continents"
     zone = "countries"
-    ################ Parameters to define manually (END) ######################
+    #zone = "continents"
+    main_plot(data_path, figures_path, field, start_date, smoothing, yscale,
+              zone)
 
 
+def main_plot(data_path, figures_path, field, start_date, smoothing, yscale,
+              zone):
     # Initialisation
     ensure_figures_directory_exists(figures_path)
-    data = load_data(path, start_date=startDate)
+    data = load_data(data_path, start_date=start_date)
     displayParam = setDisplayParam(field, zone, figures_path)
-
     # Set graphic objects
     close(1)
-    fig = figure(num=1,figsize=(10,6))
+    fig = figure(num=1, figsize=(10, 6))
     ax = fig.add_subplot(111)
-
     if zone == "continents":
         areas = ["EU", "China", "US"]
     elif zone == "countries":
         areas = ["Italy", "Spain", "Germany", "France", "Korea, South"]
     else:
         areas = ["World"]
-
     for area in areas:
         quar_date = data['Confinement'].get(area, '1/1/99')
         plot_phase_country(area, data, quar_date, ax,
-                           field, vSmoothing, yscale)
-
+                           field, smoothing, yscale)
     # Add graph decorations
     ax.set_title(displayParam['title'])
     ax.set_yscale(yscale)
     ax.set_xlabel(r'Gradient [new case/day]')
     ax.set_ylabel(r'Curvature [new case/day$^2$]')
     ax.legend(loc=2)
-    ax.grid(which='major',color='grey', linestyle='-', linewidth=1)
-    ax.grid(which='minor',color='grey', linestyle='-', linewidth=0.5)
-
+    ax.grid(which='major', color='grey', linestyle='-', linewidth=1)
+    ax.grid(which='minor', color='grey', linestyle='-', linewidth=0.5)
     fig.tight_layout()
-    savefig(displayParam['FileName'],dpi=600,bbox='tight')
+    savefig(displayParam['FileName'], dpi=600, bbox='tight')
     show()
 
 

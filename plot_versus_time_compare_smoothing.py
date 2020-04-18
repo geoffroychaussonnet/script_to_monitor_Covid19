@@ -153,12 +153,11 @@ def main():
 
     ################ Parameters to define manually ######################
     # Path to the folder containing the time series:
-    path="https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/"
+    data_path="https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/"
     figures_path = "../FIGURES"
-    daysInterval = 7   # To set Major x-axis
-    startDate = datetime.date(2020, 3,1)   # Start date of the plot:
-    extrapolPeriod = 14     # How many days to extrapolate?
-    fittingPeriod = 8       # On how long do we fit the data?
+    days_interval = 7   # To set Major x-axis
+    start_date = datetime.date(2020, 3,1)   # Start date of the plot:
+    fitting_period = 8       # On how long do we fit the data?
 
     #yscale = 'linear'
     yscale = 'log'
@@ -168,51 +167,51 @@ def main():
     #field = "Active"
     #field = "DeathRate"
 
-    #evolutionType = "cumulative"
-    evolutionType = "daily"
-    #evolutionType = "curvature"
-    #evolutionType = "smoothedCurvature"
-    #evolutionType = "R0"
+    #evolution_type = "cumulative"
+    evolution_type = "daily"
+    #evolution_type = "curvature"
+    #evolution_type = "smoothedCurvature"
+    #evolution_type = "R0"
 
-    iExtrapol = 0
+    extrapol = 0
 
-    vSmoothing = [5,3]  # [window size,order of fitting polynomial]
-    ################ Parameters to define manually ######################
+    smoothing = (5, 3)  # [window size,order of fitting polynomial]
 
+    main_plot(data_path, figures_path, field, evolution_type, smoothing,
+              days_interval, extrapol, fitting_period, start_date, yscale)
+
+
+def main_plot(data_path, figures_path, field, evolution_type, smoothing,
+              days_interval, extrapol, fitting_period, start_date, yscale):
     # Initialisation
     ensure_figures_directory_exists(figures_path)
-    data = load_data(path, start_date=startDate)
-    displayParam = setDisplayParam(field, evolutionType, figures_path)
-    fitParam = (fittingPeriod, extrapol_period_by_field[field], iExtrapol)
-
+    data = load_data(data_path, start_date=start_date)
+    displayParam = setDisplayParam(field, evolution_type, figures_path)
+    fitParam = (fitting_period, extrapol_period_by_field[field], extrapol)
     close(1)
-    fig = figure(num=1,figsize=(10,6))
+    fig = figure(num=1, figsize=(10, 6))
     ax = []
     ax.append(fig.add_subplot(121))
     ax.append(fig.add_subplot(122))
-
     areas = ["US", "Italy", "Spain", "Germany", "France"]
-
     for area in areas:
         quar_date = data['Confinement'].get(area, '1/1/99')
         plot_country(area, data, fitParam, quar_date, ax,
-                     field, evolutionType, vSmoothing,yscale)
-
+                     field, evolution_type, smoothing, yscale)
     for lax in ax:
-        if evolutionType == "R0":
+        if evolution_type == "R0":
             lax.axhline(1)
         lax.set_title(displayParam['title'])
         lax.set_yscale(yscale)
         lax.set_xlabel("Date")
-        lax.xaxis.set_major_locator(ticker.MultipleLocator(daysInterval))
+        lax.xaxis.set_major_locator(ticker.MultipleLocator(days_interval))
         lax.xaxis.set_minor_locator(ticker.MultipleLocator(1))
         lax.set_ylabel(displayParam['YaxisLabel'])
         lax.legend(loc=2)
-        lax.grid(which='major',color='grey', linestyle='-', linewidth=1)
-        lax.grid(which='minor',color='grey', linestyle='-', linewidth=0.5)
-
+        lax.grid(which='major', color='grey', linestyle='-', linewidth=1)
+        lax.grid(which='minor', color='grey', linestyle='-', linewidth=0.5)
     fig.tight_layout()
-    savefig(displayParam['FileName'],dpi=600,bbox='tight')
+    savefig(displayParam['FileName'], dpi=600, bbox='tight')
     show()
 
 
