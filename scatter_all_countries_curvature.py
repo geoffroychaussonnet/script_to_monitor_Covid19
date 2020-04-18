@@ -54,7 +54,7 @@ def get_trend(dates,evol1,fitParam,extParam):
     return xcorrel1, correl1, strRate
 
 
-def scatter_curvature_vs_x_world(data, ax, field, evolution_type, smoothing):
+def scatter_curvature_vs_x_world(data, ax, field, evolution_type, smoothing, xaxis_type):
     print("########## Treating country: %18s ###########" %('{0:^18}'.format("World")))
     filter_date = data['FilterDate']
     lstDoneCountry = []
@@ -99,71 +99,16 @@ def scatter_curvature_vs_x_world(data, ax, field, evolution_type, smoothing):
     col2 = 'green'
     posi = (curvY > 0)
 
-    xaxis = periodX
-    xaxis = totPop
-    xaxis = gradY
+    # Experimental: test different type of x-axis
+    if xaxis_type == "Number of days since > 100 confirmed cases [day]":
+        xaxis = periodX
+    elif xaxis_type == "Gradient of total confirmed [case/day]":
+        xaxis = gradY
+    elif xaxis_type == "Total confirmed cases [case]":
+        xaxis = totPop
 
     ax.scatter(xaxis[posi],curvY[posi], color=col1)
     ax.scatter(xaxis[np.invert(posi)], -curvY[np.invert(posi)], color=col2)
-    for cntry,x,y in zip(lstFoundCountry,xaxis,curvY):
-        if y>0:
-            ax.annotate(cntry, xy=(x,y), xytext=(3, 3), textcoords="offset points", ha='center', va='bottom',color=col1,weight='bold')
-        else:
-            ax.annotate(cntry, xy=(x,-y), xytext=(3, 3), textcoords="offset points", ha='center', va='bottom',color=col2,weight='bold')
-
-
-def plot_curvature_vs_gradient(area, data, ax, field,
-                               evolution_type, smoothing):
-    print("########## Treating country: %18s ###########" %('{0:^18}'.format(area)))
-    filter_date = data['FilterDate']
-    lstDoneCountry = []
-    matCountry = []
-    for area in data["Confirmed"]["Country/Region"]:
-        if area not in lstDoneCountry:
-            lstDoneCountry.append(area)
-            evol1 = evolution_country(area, data,
-                                      field,
-                                      evolution_type,
-                                      filter_date,
-                                      smoothing)
-            matCountry.append(evol1)
-
-    periodX = []
-    curvY = []
-    gradY = []
-    totPop = []
-    lstFoundCountry = []
-    for area, evol0 in zip(lstDoneCountry, matCountry):
-        check = (evol0 > 100)
-        window_length, polyorder = smoothing
-        evol = savgol_filter(evol0, window_length, polyorder)
-
-        locPeriod = sum(check)
-        if locPeriod > 2:
-            periodX.append(sum(check))
-            curvature = np.diff(evol[check],2).mean()
-            gradient = np.diff(evol[check],1).mean()
-            curvY.append(curvature)
-            gradY.append(gradient)
-            lstFoundCountry.append(area)
-            totPop.append(evol0[-1])
-            print(area, locPeriod, curvature)
-
-    periodX = np.array(periodX)
-    curvY = np.array(curvY)
-    totPop = np.array(totPop)
-    gradY = np.array(gradY)
-
-    col1 = 'black'
-    col2 = 'green'
-    posi = (curvY>0)
-
-    xaxis = periodX
-    xaxis = totPop
-    xaxis = gradY
-
-    ax.scatter(xaxis[posi],curvY[posi],color=col1)
-    ax.scatter(xaxis[np.invert(posi)],-curvY[np.invert(posi)],color=col2)
     for cntry,x,y in zip(lstFoundCountry,xaxis,curvY):
         if y>0:
             ax.annotate(cntry, xy=(x,y), xytext=(3, 3), textcoords="offset points", ha='center', va='bottom',color=col1,weight='bold')
@@ -235,7 +180,7 @@ def plot_country(strCountry, data, fitParam, quar_date, ax,
         ax.annotate(strRate, xy=(xextrapol[-1],yextrapol[-1]), xytext=(3, 3), textcoords="offset points", ha='center', va='bottom',color=col,weight='bold')
 
 
-def setDisplayParam(field, evolutionType, figures_path):
+def setDisplayParam(field, evolutionType, figures_path, xaxis_type):
     displayParam = {}
 
     strUnit, txtField = unit_and_field(field)
@@ -244,6 +189,9 @@ def setDisplayParam(field, evolutionType, figures_path):
     txt_title_format = "%s %s in some Western countries\n (Source: Johns Hopkins University)"
     title_and_y_axis(displayParam, strUnit, txtEvol, txtField,
                      txt_title_format)
+
+    displayParam['XaxisLabel'] = xaxis_type
+    displayParam['YaxisLabel'] = r'Curvature of total confirmed cases [case/day$^2$]'
 
     png_format = "%s_Covid19_scatter_curvature_vs_period_%s_%s.png"
     name = file_name(figures_path, png_format, txtEvol, txtField)
@@ -277,12 +225,16 @@ def main():
     iExtrapol = 0
 
     vSmoothing = [7,3]  # [window size,order of fitting polynomial]
+
+    xaxis_type = "Number of days since > 100 confirmed cases [day]"
+    #xaxis_type = "Gradient of total confirmed [case/day]"
+    #xaxis_type = "Total confirmed cases [case]"
     ################ Parameters to define manually ######################
 
     # Initialisation
     ensure_figures_directory_exists(figures_path)
     data = load_data(path, start_date=startDate)
-    displayParam = setDisplayParam(field, evolutionType, figures_path)
+    displayParam = setDisplayParam(field, evolutionType, figures_path, xaxis_type)
 
     close(1)
     fig = figure(num=1,figsize=(10,6))
@@ -290,12 +242,13 @@ def main():
 
     scatter_curvature_vs_x_world(data, ax, field,
                                  evolutionType,
-                                 vSmoothing)
+                                 vSmoothing,xaxis_type)
 
     #ax.set_title(displayParam['title'])
     ax.set_xscale(yscale)
     ax.set_yscale(yscale)
-    #ax.set_xlabel("Date")
+    ax.set_xlabel(displayParam['XaxisLabel'])
+    ax.set_ylabel(displayParam['YaxisLabel'])
     #ax.xaxis.set_major_locator(ticker.MultipleLocator(daysInterval))
     #ax.xaxis.set_minor_locator(ticker.MultipleLocator(1))
     #ax.set_ylabel(displayParam['YaxisLabel'])
@@ -303,7 +256,7 @@ def main():
     ax.grid(which='major',color='grey', linestyle='-', linewidth=1, zorder=-1)
     ax.grid(which='minor',color='grey', linestyle='-', linewidth=0.5,zorder=-1)
 
-    #fig.tight_layout()
+    fig.tight_layout()
     savefig(displayParam['FileName'],dpi=600,bbox='tight')
     show()
 
