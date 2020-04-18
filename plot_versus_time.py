@@ -56,9 +56,10 @@ def get_trend(dates,evol1,fitParam,extParam):
     return xcorrel1, correl1, strRate
 
 
+
 def plot_country(area, data, fitParam, quar_date, ax, field,
                  smoothing, evolution_type, y_scale):
-    print("########## Treating country: %12s ###########" % area)
+    print("########## Treating country: %18s ###########" %('{0:^18}'.format(area)))
     filter_date = data['FilterDate']
     quar_date = dateIn(quar_date)
     fittingPeriod, extrapolPeriod, iExtrapol = fitParam
@@ -165,7 +166,7 @@ def main():
     iExtrapol = 0
 
     # Smoothing: (set window size to 0 to deactivate)
-    vSmoothing = [7,3]  # [window size,order of fitting polynomial]
+    vSmoothing = [0,3]  # [window size,order of fitting polynomial]
 
     # Type of zones (see in the execution section)
     #zone = "continents"
@@ -184,7 +185,7 @@ def main():
     ax = fig.add_subplot(111)
 
     if zone == "continents":
-        areas = ["EU", "China", "US"]
+        areas = ["EU", "China", "US", "Africa"]
     elif zone == "countries":
         areas = ["US", "Italy", "Spain", "Germany", "France"]
     else:

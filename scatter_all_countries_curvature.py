@@ -55,7 +55,7 @@ def get_trend(dates,evol1,fitParam,extParam):
 
 
 def scatter_curvature_vs_x_world(data, ax, field, evolution_type, smoothing):
-    print("########## Treating World #############")
+    print("########## Treating country: %18s ###########" %('{0:^18}'.format("World")))
     filter_date = data['FilterDate']
     lstDoneCountry = []
     matCountry = []
@@ -114,9 +114,8 @@ def scatter_curvature_vs_x_world(data, ax, field, evolution_type, smoothing):
 
 def plot_curvature_vs_gradient(area, data, ax, field,
                                evolution_type, smoothing):
-    print("########## Treating country: ", area, " #############")
+    print("########## Treating country: %18s ###########" %('{0:^18}'.format(area)))
     filter_date = data['FilterDate']
-
     lstDoneCountry = []
     matCountry = []
     for area in data["Confirmed"]["Country/Region"]:
@@ -174,11 +173,11 @@ def plot_curvature_vs_gradient(area, data, ax, field,
 
 def plot_country(strCountry, data, fitParam, quar_date, ax,
                  field, evolution_type, smoothing, y_scale):
-    print("########## Treating country: ", strCountry, " #############")
+    print("########## Treating country: %18s ###########" %('{0:^18}'.format(strCountry)))
     filter_date = data['FilterDate']
     quar_date = dateIn(quar_date)
     fittingPeriod, extrapolPeriod, iExtrapol = fitParam
-
+    
     # Extract evolution for this country
     evol1 = evolution_country(strCountry, data, field, evolution_type,
                               filter_date, smoothing)

@@ -59,9 +59,10 @@ def get_trend(dates,evol1,fitParam,extParam):
     return xcorrel1, correl1, strRate
 
 
+
 def plot_country(area, dataParam, fitParam, quar_date, ax, field,
                  evolution_type, smoothing, y_scale):
-    print("########## Treating country: %12s ###########" % area)
+    print("########## Treating country: %18s ###########" %('{0:^18}'.format(area)))
     filter_date = dataParam['FilterDate']
     quar_date = dateIn(quar_date)
     fittingPeriod, extrapolPeriod, iExtrapol = fitParam

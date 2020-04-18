@@ -20,7 +20,7 @@ from covid_utils import file_name
 
 
 def plot_phase_country(area, data, quar_date, ax, field, smoothing, y_scale):
-    print("########## Treating country: %12s ###########" % area)
+    print("########## Treating country: %18s ###########" %('{0:^18}'.format(area)))
     filter_date = data['FilterDate']
 
     # Extract evolution for this country
