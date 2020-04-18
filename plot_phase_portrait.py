@@ -20,18 +20,17 @@ from covid_utils import file_name
 
 
 def plot_phase_country(area, data, quar_date, ax, field, smoothing, y_scale):
-    print("########## Treating country: %18s ###########" %('{0:^18}'.format(area)))
+    print("########## Treating country: {0:^18} ###########".format(area))
     filter_date = data['FilterDate']
 
     # Extract evolution for this country
     curvature = evolution_country(area, data, field,
-                                  "smoothedCurvature", filter_date, smoothing)
-    gradient = evolution_country(area, data, field, "daily", filter_date,
-                                 smoothing)
+                                  SmoothedCurvature(*smoothing),
+                                  filter_date)
+    gradient = evolution_country(area, data, field, Daily(), filter_date)
 
     # Filter data for more than 100 cases
-    cumul = evolution_country(area, data, field, "cumulative",
-                              filter_date, smoothing)
+    cumul = evolution_country(area, data, field, Cumulative(), filter_date)
     good_data = (cumul > 100)
 
     gradient = gradient[good_data]

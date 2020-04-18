@@ -1,4 +1,5 @@
 import sys
+from abc import abstractmethod
 from pathlib import Path
 
 import numpy as np
@@ -92,10 +93,10 @@ def _get_countries(area):
     return countries
 
 
-def evolution_country(area, data, field, evolution_type, filter_date,
-                      smoothing):
+def evolution_country(area, data, field, evolution_type, filter_date):
     if field == "Confirmed":
-        cumulative_evolution = cumulative_evolution_single(area, data['Confirmed'])
+        cumulative_evolution = cumulative_evolution_single(area,
+                                                           data['Confirmed'])
     elif field == "Deaths":
         cumulative_evolution = cumulative_evolution_single(area, data['Deaths'])
     elif field == "Active":
@@ -110,31 +111,7 @@ def evolution_country(area, data, field, evolution_type, filter_date,
     else:
         raise ValueError(field)
 
-    if evolution_type == "cumulative":
-        evolution = cumulative_evolution
-    elif evolution_type == "daily":
-        evolution = np.zeros(len(cumulative_evolution))
-        evolution[1:] = np.diff(cumulative_evolution)
-    elif evolution_type == "curvature":
-        evolution = np.zeros(len(cumulative_evolution))
-        evolution[2:] = np.diff(cumulative_evolution, 2)
-    elif evolution_type == "smoothedCurvature":
-        # np.diff #1
-        window_length, polyorder = smoothing
-        evolution = np.diff(cumulative_evolution)
-        smoothed_evolution = savgol_filter(evolution, window_length, polyorder)
-        # np.diff #2
-        evolution = np.zeros(len(cumulative_evolution))
-        evolution[2:] = np.diff(smoothed_evolution)
-    elif evolution_type == "R0":
-        window_length, polyorder = smoothing
-        evolution = np.zeros(len(cumulative_evolution))
-        delta = np.diff(cumulative_evolution)
-        smoothed_delta = savgol_filter(delta, window_length, polyorder)
-        evolution[1:] = smoothed_delta/np.roll(smoothed_delta, 5)
-    else:
-        raise ValueError(evolution_type)
-
+    evolution = evolution_type.evolution(cumulative_evolution)
     return evolution[filter_date]
 
 
@@ -178,20 +155,6 @@ def unit_and_field(field):
         txtField = "death rate"
         strUnit = "[%]"
     return strUnit, txtField
-
-
-def txt_evol(evolutionType):
-    if evolutionType == 'cumulative':
-        txtEvol = "Cumulative"
-    elif evolutionType == 'daily':
-        txtEvol = 'Daily'
-    elif evolutionType == 'curvature':
-        txtEvol = 'Derivative of daily'
-    elif evolutionType == 'smoothedCurvature':
-        txtEvol = 'Derivative of smoothed daily'
-    elif evolutionType == 'R0':
-        txtEvol = 'R0 from'
-    return txtEvol
 
 
 def title_and_y_axis(displayParam, strUnit, txtEvol, txtField,
@@ -291,3 +254,72 @@ quar_date_by_area = {"World": '3/22/21', "EU": '3/22/21', "China": '1/22/22',
                      "Finland": '3/19/20', "Canada": '5/22/20',
                      "Belgium": '3/18/20', "Ireland": '3/28/20',
                      }
+
+
+class EvolutionType:
+    @abstractmethod
+    def evolution(self, cumulative_evolution):
+        pass
+
+    @property
+    def text(self):
+        return self.__class__.__name__
+
+
+class Cumulative(EvolutionType):
+    def evolution(self, cumulative_evolution):
+        return cumulative_evolution
+
+
+class Daily(EvolutionType):
+    def evolution(self, cumulative_evolution):
+        evol = np.zeros(len(cumulative_evolution))
+        evol[1:] = np.diff(cumulative_evolution)
+        return evol
+
+
+class Curvature(EvolutionType):
+    def evolution(self, cumulative_evolution):
+        evol = np.zeros(len(cumulative_evolution))
+        evol[2:] = np.diff(cumulative_evolution, 2)
+        return evol
+
+    @property
+    def text(self):
+        return 'Derivative of daily'
+
+
+class SmoothedCurvature(EvolutionType):
+    def __init__(self, days, polyorder):
+        self._days = days
+        self._polyorder = polyorder
+
+    def evolution(self, cumulative_evolution):
+        # np.diff #1
+        evolution = np.diff(cumulative_evolution)
+        smoothed_evolution = savgol_filter(evolution, self._days,
+                                           self._polyorder)
+        # np.diff #2
+        evolution = np.zeros(len(cumulative_evolution))
+        evolution[2:] = np.diff(smoothed_evolution)
+        return evolution
+
+    @property
+    def text(self):
+        return 'Derivative of smoothed daily'
+
+
+class R0(EvolutionType):
+    def __init__(self, days, polyorder):
+        self._days = days
+        self._polyorder = polyorder
+
+    def evolution(self, cumulative_evolution):
+        evolution = np.zeros(len(cumulative_evolution))
+        delta = np.diff(cumulative_evolution)
+        smoothed_delta = savgol_filter(delta, self._days, self._polyorder)
+        evolution[1:] = smoothed_delta/np.roll(smoothed_delta, 5)
+
+    @property
+    def text(self):
+        return 'R0 from'

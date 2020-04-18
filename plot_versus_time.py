@@ -56,18 +56,16 @@ def get_trend(dates,evol1,fitParam,extParam):
     return xcorrel1, correl1, strRate
 
 
-
 def plot_country(area, data, fitParam, quar_date, ax, field,
                  smoothing, evolution_type, y_scale):
-    print("########## Treating country: %18s ###########" %('{0:^18}'.format(area)))
+    print("########## Treating country: {0:^18} ###########".format(area))
     filter_date = data['FilterDate']
     quar_date = dateIn(quar_date)
     fittingPeriod, extrapolPeriod, iExtrapol = fitParam
     date_axis = data['DateAxis']
 
     # Extract evolution for this country
-    evol1 = evolution_country(area, data, field, evolution_type,
-                              filter_date, smoothing)
+    evol1 = evolution_country(area, data, field, evolution_type, filter_date)
 
     # find the quarantine date 
     iQuar = data['Dates'] >= quar_date
@@ -124,7 +122,7 @@ def setDisplayParam(field, evolutionType, zone, figures_path):
     displayParam = {}
 
     strUnit, txtField = unit_and_field(field)
-    txtEvol = txt_evol(evolutionType)
+    txtEvol = evolutionType.text
 
     title_and_y_axis(displayParam, strUnit, txtEvol, txtField,
                      "{} {}\n (Source: Johns Hopkins University)")
@@ -155,17 +153,16 @@ def main():
     #field = "DeathRate"
 
     # Type of evolution:
-    #evolution_type = "cumulative"
-    evolution_type = "daily"
-    #evolution_type = "curvature"
-    #evolution_type = "smoothedCurvature"
-    #evolution_type = "R0"  # (Experimental)
+    #evolution_type = Cumulative()
+    evolution_type = Daily()
+    #evolution_type = Curvature()
+    #evolution_type = SmoothedCurvature(7, 3)
+    #evolution_type = R0() # Experimental
 
-    # Smoothing: (set window size to 0 to deactivate)
-    smoothing = (0, 3)  # [window size,order of fitting polynomial]
-
-    # Extrapolate data before and after lockdown (0=no, 1=yes) 
+    # Extrapolate data before and after lockdown (0=no, 1=yes)
     extrapol = 0
+
+    smoothing = (0, 3)
 
     # Type of zones (see in the execution section)
     #zone = "continents"

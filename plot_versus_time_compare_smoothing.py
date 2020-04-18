@@ -68,9 +68,8 @@ def plot_country(area, dataParam, fitParam, quar_date, ax, field,
     fittingPeriod, extrapolPeriod, iExtrapol = fitParam
 
     # Extract evolution for this country
-    evol1 = evolution_country(area, dataParam, field,
-                              evolution_type,
-                              filter_date, smoothing)
+    evol1 = evolution_country(area, dataParam, field, evolution_type,
+                              filter_date)
 
     # find the quarantine date 
     dates = dataParam['Dates']
@@ -135,7 +134,7 @@ def setDisplayParam(field, evolutionType, figures_path):
     displayParam = {}
 
     strUnit, txtField = unit_and_field(field)
-    txtEvol = txt_evol(evolutionType)
+    txtEvol = evolutionType.text
 
     title_and_y_axis(displayParam, strUnit, txtEvol, txtField,
                      "{} {}\n (Source: Johns Hopkins University)")
@@ -167,11 +166,11 @@ def main():
     #field = "Active"
     #field = "DeathRate"
 
-    #evolution_type = "cumulative"
-    evolution_type = "daily"
-    #evolution_type = "curvature"
-    #evolution_type = "smoothedCurvature"
-    #evolution_type = "R0"
+    #evolution_type = Cumulative()
+    evolution_type = Daily()
+    #evolution_type = Curvature()
+    #evolution_type = SmoothedCurvature(5, 3)
+    #evolution_type = R0(5, 3)
 
     extrapol = 0
 

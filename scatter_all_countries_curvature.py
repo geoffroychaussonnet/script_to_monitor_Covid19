@@ -1,9 +1,9 @@
 # Author: Geoffroy Chaussonnet
 
 from pylab import *
-from pathlib import Path
+
 from covid_utils import *
-from covid_utils import unit_and_field, txt_evol, file_name
+from covid_utils import unit_and_field, file_name
 
 
 ############### Basic use #############################
@@ -62,11 +62,8 @@ def scatter_curvature_vs_x_world(data, ax, field, evolution_type, smoothing, xax
     for area in data["Confirmed"]["Country/Region"]:
         if area not in lstDoneCountry:
             lstDoneCountry.append(area)
-            evol1 = evolution_country(area, data,
-                                      field,
-                                      evolution_type,
-                                      filter_date,
-                                      smoothing)
+            evol1 = evolution_country(area, data, field, evolution_type,
+                                      filter_date)
             matCountry.append(evol1)
 
     periodX = []
@@ -117,15 +114,15 @@ def scatter_curvature_vs_x_world(data, ax, field, evolution_type, smoothing, xax
 
 
 def plot_country(strCountry, data, fitParam, quar_date, ax,
-                 field, evolution_type, smoothing, y_scale):
-    print("########## Treating country: %18s ###########" %('{0:^18}'.format(strCountry)))
+                 field, evolution_type, y_scale):
+    print("########## Treating country: {0:^18} ###########".format(strCountry))
     filter_date = data['FilterDate']
     quar_date = dateIn(quar_date)
     fittingPeriod, extrapolPeriod, iExtrapol = fitParam
     
     # Extract evolution for this country
     evol1 = evolution_country(strCountry, data, field, evolution_type,
-                              filter_date, smoothing)
+                              filter_date)
 
     # find the quarantine date 
     dates = data['Dates']
@@ -184,7 +181,7 @@ def setDisplayParam(field, evolutionType, figures_path, xaxis_type):
     displayParam = {}
 
     strUnit, txtField = unit_and_field(field)
-    txtEvol = txt_evol(evolutionType)
+    txtEvol = evolutionType.text
 
     txt_title_format = "{} {} in some Western countries\n (Source: Johns Hopkins University)"
     title_and_y_axis(displayParam, strUnit, txtEvol, txtField,
@@ -216,8 +213,8 @@ def main():
     #field = "Active"
     #field = "DeathRate"
 
-    evolution_type = "cumulative"
-    #evolution_type = "daily"
+    evolution_type = Cumulative()
+    #evolution_type = Daily()
 
     smoothing = (7, 3)  # [window size,order of fitting polynomial]
 
@@ -226,12 +223,12 @@ def main():
     #xaxis_type = "Total confirmed cases [case]"
     ################ Parameters to define manually ######################
 
-    method_name(data_path, figures_path, field, evolution_type, smoothing,
-                xaxis_type, start_date, yscale)
+    main_plot(data_path, figures_path, field, evolution_type, smoothing,
+              xaxis_type, start_date, yscale)
 
 
-def method_name(data_path, figures_path, field, evolution_type, smoothing,
-                xaxis_type, start_date, yscale):
+def main_plot(data_path, figures_path, field, evolution_type, smoothing,
+              xaxis_type, start_date, yscale):
     # Initialisation
     ensure_figures_directory_exists(figures_path)
     data = load_data(data_path, start_date=start_date)
