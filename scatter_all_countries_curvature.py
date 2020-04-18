@@ -186,14 +186,14 @@ def setDisplayParam(field, evolutionType, figures_path, xaxis_type):
     strUnit, txtField = unit_and_field(field)
     txtEvol = txt_evol(evolutionType)
 
-    txt_title_format = "%s %s in some Western countries\n (Source: Johns Hopkins University)"
+    txt_title_format = "{} {} in some Western countries\n (Source: Johns Hopkins University)"
     title_and_y_axis(displayParam, strUnit, txtEvol, txtField,
                      txt_title_format)
 
     displayParam['XaxisLabel'] = xaxis_type
     displayParam['YaxisLabel'] = r'Curvature of total confirmed cases [case/day$^2$]'
 
-    png_format = "%s_Covid19_scatter_curvature_vs_period_%s_%s.png"
+    png_format = "{}_Covid19_scatter_curvature_vs_period_{}_{}.png"
     name = file_name(figures_path, png_format, txtEvol, txtField)
     displayParam['FileName'] = name
     return displayParam

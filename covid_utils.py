@@ -196,9 +196,9 @@ def txt_evol(evolutionType):
 
 def title_and_y_axis(displayParam, strUnit, txtEvol, txtField,
                      txt_title_format):
-    txtTitle = txt_title_format % (txtEvol, txtField)
+    txtTitle = txt_title_format.format(txtEvol, txtField)
     displayParam['title'] = txtTitle
-    txtYaxis = "%s %s %s" % (txtEvol, txtField, strUnit)
+    txtYaxis = "{} {} {}".format(txtEvol, txtField, strUnit)
     displayParam['YaxisLabel'] = txtYaxis
 
 
@@ -216,9 +216,9 @@ def file_name(figures_path, png_format, txt_evol, txt_field, zone=None,
     :return:
     """
     if zone:
-        fname = png_format % (str_date_today, txt_evol, txt_field, zone)
+        fname = png_format.format(str_date_today, txt_evol, txt_field, zone)
     else:
-        fname = png_format % (str_date_today, txt_evol, txt_field)
+        fname = png_format.format(str_date_today, txt_evol, txt_field)
     fullpath = str(Path(figures_path, fname))
     return fullpath.replace(" ", "_")
 

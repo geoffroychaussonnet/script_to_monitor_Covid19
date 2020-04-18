@@ -127,9 +127,9 @@ def setDisplayParam(field, evolutionType, zone, figures_path):
     txtEvol = txt_evol(evolutionType)
 
     title_and_y_axis(displayParam, strUnit, txtEvol, txtField,
-                     "%s %s\n (Source: Johns Hopkins University)")
+                     "{} {}\n (Source: Johns Hopkins University)")
 
-    name = file_name(figures_path, "%s_evolCovid19_%s_%s_for_%s.png", txtEvol,
+    name = file_name(figures_path, "{}_evolCovid19_{}_{}_for_{}.png", txtEvol,
                      txtField, zone)
     displayParam['FileName'] = name
     return displayParam

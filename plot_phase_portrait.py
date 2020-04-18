@@ -70,9 +70,9 @@ def setDisplayParam(field, zone, figures_path):
     txtEvol = "Phase portrait from"
 
     title_and_y_axis(displayParam, strUnit, txtEvol, txtField,
-                     "%s %s\n (Source: Johns Hopkins University)")
+                     "{} {}\n (Source: Johns Hopkins University)")
 
-    name = file_name(figures_path, "%s_phase_diagram_Covid19_%s_%s_for_%s.png",
+    name = file_name(figures_path, "{}_phase_diagram_Covid19_{}_{}_for_{}.png",
                      txtEvol, txtField, zone)
     displayParam['FileName'] = name
     return displayParam
@@ -121,7 +121,7 @@ def main_plot(data_path, figures_path, field, start_date, smoothing, yscale,
     if zone == "continents":
         areas = ["EU", "China", "US"]
     elif zone == "countries":
-        areas = ["Italy", "Spain", "Germany", "France", "Korea, South"]
+        areas = ["Italy", "Spain", "Germany", "France", "Korea, South", "US"]
     else:
         areas = ["World"]
     for area in areas:
