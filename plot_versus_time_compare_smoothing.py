@@ -19,6 +19,8 @@ from covid_utils import *
 
 
 ######################## Definition of Functions ############################
+from covid_utils import extrapol_period_by_field, file_name
+
 
 def get_trend(dates,evol1,fitParam,extParam):
     dtFitBeg = fitParam[0]
@@ -57,29 +59,32 @@ def get_trend(dates,evol1,fitParam,extParam):
     return xcorrel1, correl1, strRate
 
 
-def plot_country(strCountry,dataParam,displayParam,fitParam,quarParam,ax):
-    print("########## Treating country: %18s ###########" %('{0:^18}'.format(strCountry)))
-    quarDate = quarParam
-    fittingPeriod = fitParam[0]
-    extrapolPeriod = fitParam[1]
-    iExtrapol = fitParam[2]
+
+def plot_country(area, dataParam, fitParam, quar_date, ax, field,
+                 evolution_type, smoothing, y_scale):
+    print("########## Treating country: %18s ###########" %('{0:^18}'.format(area)))
+    filter_date = dataParam['FilterDate']
+    quar_date = dateIn(quar_date)
+    fittingPeriod, extrapolPeriod, iExtrapol = fitParam
 
     # Extract evolution for this country
-    evol1 = evolution_country(strCountry,dataParam,displayParam)
+    evol1 = evolution_country(area, dataParam, field,
+                              evolution_type,
+                              filter_date, smoothing)
 
     # find the quarantine date 
-    iQuar = np.where(dataParam['Dates']>=dateIn(quarDate))
-    iQuar = dataParam['Dates']>=dateIn(quarDate)
+    dates = dataParam['Dates']
+    iQuar = dates >= quar_date
 
     fitParam1 = []
     extParam1 = []
     # Define the period for the trend
     if sum(iQuar) > 3: # Quarantine found
-        dtFitEnd = dateIn(quarDate)
+        dtFitEnd = quar_date
 
         fitParam2 = []
         extParam2 = []
-        fitParam2.append(dateIn(quarDate))
+        fitParam2.append(quar_date)
         fitParam2.append(dt.date.today() - dt.timedelta(days=1))
         extParam2.append(dtFitEnd)
         extParam2.append(dtFitEnd + dt.timedelta(days=extrapolPeriod+1))
@@ -93,48 +98,52 @@ def plot_country(strCountry,dataParam,displayParam,fitParam,quarParam,ax):
     extParam1.append(dtExtBeg)
     extParam1.append(dtExtEnd)
 
-    evol1s = savgol_filter(evol1, dataParam['Smoothing'][0], dataParam['Smoothing'][1]) # arg2: window size; arg3:  polynomial order 
+    window_length, polyorder = smoothing
+    evol1s = savgol_filter(evol1, window_length, polyorder)
 
-    if displayParam['YScale'] == 'log':
+    if y_scale == 'log':
         evol1 = np.ma.masked_where(evol1<=0,evol1)
         evol1s = np.ma.masked_where(evol1s<=0,evol1s)
-    p = ax[0].semilogy(dataParam['DateAxis'],evol1s,ls='-',lw=4.0,label=strCountry)
+    date_axis = dataParam['DateAxis']
+    p = ax[0].semilogy(date_axis, evol1s, ls='-', lw=4.0, label=area)
     col = p[0].get_color()
-    ax[1].semilogy(dataParam['DateAxis'],evol1,ls='-',lw=4.0,label=strCountry)
+    ax[1].semilogy(date_axis, evol1, ls='-', lw=4.0, label=area)
 
     if sum(iQuar) > 0: # Quarantine found
         # Plot the quarantine date
-        ax[0].scatter(dataParam['DateAxis'][iQuar][0],evol1[iQuar][0],c=col,s=300,marker="X")
-        ax[1].scatter(dataParam['DateAxis'][iQuar][0],evol1[iQuar][0],c=col,s=300,marker="X")
+        ax[0].scatter(date_axis[iQuar][0], evol1[iQuar][0], c=col, s=300, marker="X")
+        ax[1].scatter(date_axis[iQuar][0], evol1[iQuar][0], c=col, s=300, marker="X")
 
     if (iExtrapol==0): return
 
     # Get the trend
-    xextrapol, yextrapol, strRate = get_trend(dataParam['Dates'],evol1,fitParam1,extParam1)
+    xextrapol, yextrapol, strRate = get_trend(dates, evol1, fitParam1, extParam1)
     ax[0].semilogy(xextrapol,yextrapol,ls='--',lw=2.0,c=col)
     ax[1].semilogy(xextrapol,yextrapol,ls='--',lw=2.0,c=col)
     ax[0].annotate(strRate, xy=(xextrapol[-1],yextrapol[-1]), xytext=(3, 3), textcoords="offset points", ha='center', va='bottom',color=col,weight='bold')
     ax[1].annotate(strRate, xy=(xextrapol[-1],yextrapol[-1]), xytext=(3, 3), textcoords="offset points", ha='center', va='bottom',color=col,weight='bold')
 
     if sum(iQuar) > 3: # Quarantine found
-        xextrapol, yextrapol, strRate = get_trend(dataParam['Dates'],evol1,fitParam2,extParam2)
+        xextrapol, yextrapol, strRate = get_trend(dates, evol1, fitParam2, extParam2)
         ax[0].semilogy(xextrapol,yextrapol,ls='-',lw=2.0,c=col)
         ax[0].annotate(strRate, xy=(xextrapol[-1],yextrapol[-1]), xytext=(3, 3), textcoords="offset points", ha='center', va='bottom',color=col,weight='bold')
         ax[1].semilogy(xextrapol,yextrapol,ls='-',lw=2.0,c=col)
         ax[1].annotate(strRate, xy=(xextrapol[-1],yextrapol[-1]), xytext=(3, 3), textcoords="offset points", ha='center', va='bottom',color=col,weight='bold')
 
-def setDisplayParam(field,evolutionType,yscale,figures_path):
+
+def setDisplayParam(field, evolutionType, figures_path):
     displayParam = {}
 
     strUnit, txtField = unit_and_field(field)
     txtEvol = txt_evol(evolutionType)
 
-    txt_title_format = "%s %s\n (Source: Johns Hopkins University)"
-    title_and_y_axis(displayParam, field, strUnit, txtEvol, txtField,
-                     txt_title_format)
+    title_and_y_axis(displayParam, strUnit, txtEvol, txtField,
+                     "%s %s\n (Source: Johns Hopkins University)")
 
-    png_format = "%s_evolCovid19_%s_%s_with_without_smooth.png"
-    file_yscale(displayParam, figures_path, png_format, txtEvol, txtField, yscale, None)
+    name = file_name(figures_path,
+                      "%s_evolCovid19_%s_%s_with_without_smooth.png",
+                     txtEvol, txtField)
+    displayParam['FileName'] = name
     return displayParam
 
 
@@ -170,9 +179,11 @@ def main():
     vSmoothing = [5,3]  # [window size,order of fitting polynomial]
     ################ Parameters to define manually ######################
 
-    dataParam = loadData(path,field,evolutionType,vSmoothing,startDate=startDate)
-    displayParam = setDisplayParam(field,evolutionType,yscale,figures_path)
-    fitParam = setFitExtraParam(field,fittingPeriod, extrapolPeriod,dataParam,iExtrapol)
+    # Initialisation
+    ensure_figures_directory_exists(figures_path)
+    data = load_data(path, start_date=startDate)
+    displayParam = setDisplayParam(field, evolutionType, figures_path)
+    fitParam = (fittingPeriod, extrapol_period_by_field[field], iExtrapol)
 
     close(1)
     fig = figure(num=1,figsize=(10,6))
@@ -183,13 +194,15 @@ def main():
     areas = ["US", "Italy", "Spain", "Germany", "France"]
 
     for area in areas:
-        quar_date = dataParam['Confinement'].get(area, '1/1/99')
-        plot_country(area, dataParam, displayParam, fitParam, quar_date, ax)
+        quar_date = data['Confinement'].get(area, '1/1/99')
+        plot_country(area, data, fitParam, quar_date, ax,
+                     field, evolutionType, vSmoothing,yscale)
 
     for lax in ax:
-        if dataParam['EvolutionType'] == "R0": lax.axhline(1)
+        if evolutionType == "R0":
+            lax.axhline(1)
         lax.set_title(displayParam['title'])
-        lax.set_yscale(displayParam['YScale'])
+        lax.set_yscale(yscale)
         lax.set_xlabel("Date")
         lax.xaxis.set_major_locator(ticker.MultipleLocator(daysInterval))
         lax.xaxis.set_minor_locator(ticker.MultipleLocator(1))

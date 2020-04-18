@@ -16,61 +16,65 @@ from covid_utils import *
 # Argument 6: axis (matplotlib object) where to plot the curves
 
 ######################## Definition of Functions (BEGIN) ############################
+from covid_utils import file_name
 
-def plot_phase_country(strCountry,dataParam,displayParam,fitParam,quarParam,ax):
-    print("########## Treating country: %18s ###########" %('{0:^18}'.format(strCountry)))
-    quarDate = quarParam
-    fittingPeriod = fitParam[0]
-    extrapolPeriod = fitParam[1]
-    iExtrapol = fitParam[2]
+
+def plot_phase_country(area, data, quar_date, ax, field, smoothing, y_scale):
+    print("########## Treating country: %18s ###########" %('{0:^18}'.format(area)))
+    filter_date = data['FilterDate']
 
     # Extract evolution for this country
-    dataParam['EvolutionType'] = "smoothedCurvature"
-    curvature = evolution_country(strCountry,dataParam,displayParam)
-    dataParam['EvolutionType'] = "daily"
-    gradient = evolution_country(strCountry,dataParam,displayParam)
+    curvature = evolution_country(area, data, field,
+                                  "smoothedCurvature", filter_date, smoothing)
+    gradient = evolution_country(area, data, field, "daily", filter_date,
+                                 smoothing)
 
     # Filter data for more than 100 cases
-    dataParam['EvolutionType'] = "cumulative"
-    cumul = evolution_country(strCountry,dataParam,displayParam)
+    cumul = evolution_country(area, data, field, "cumulative",
+                              filter_date, smoothing)
+    good_data = (cumul > 100)
 
-    gooddata = (cumul>100)
-    cumul = cumul[gooddata]
-    gradient = gradient[gooddata]
-    curvature = curvature[gooddata]
-    locDates = dataParam['Dates'][gooddata]
+    gradient = gradient[good_data]
+    curvature = curvature[good_data]
+    dates = data['Dates'][good_data]
     
     # find the quarantine date 
-    iQuar = locDates>=dateIn(quarDate)
+    quar_date = dateIn(quar_date)
+    quar_indices = dates >= quar_date
 
+    # smooth
     scurv = curvature
     sgrad = gradient
-    if dataParam['Smoothing'][0] != 0:
-        scurv = savgol_filter(curvature, dataParam['Smoothing'][0], dataParam['Smoothing'][1]) # arg2: window size; arg3:  polynomial order 
-        sgrad = savgol_filter(gradient, dataParam['Smoothing'][0], dataParam['Smoothing'][1]) # arg2: window size; arg3:  polynomial order 
+    window_length, polyorder = smoothing
+    if window_length != 0:
+        scurv = savgol_filter(curvature, window_length, polyorder)
+        sgrad = savgol_filter(gradient, window_length, polyorder)
 
-    if displayParam['YScale'] == 'log':
-        scurv = np.ma.masked_where(scurv<=0,scurv)
-    p = ax.semilogy(sgrad,scurv,ls='-',marker='o',lw=4.0,label=strCountry)
+    # draw the diagram
+    if y_scale == 'log':
+        scurv = np.ma.masked_where(scurv <= 0, scurv)
+    p = ax.semilogy(sgrad, scurv, ls='-', marker='o', lw=4.0, label=area)
     col = p[0].get_color()
-    ax.scatter(sgrad[-1],scurv[-1],c=col,s=100,marker="s")
+    ax.scatter(sgrad[-1], scurv[-1], c=col, s=100, marker="s")
 
-    if sum(iQuar) > 0: # Quarantine found
+    if sum(quar_indices) > 0:  # Quarantine found
         # Plot the quarantine date
-        ax.scatter(sgrad[iQuar][0],scurv[iQuar][0],c=col,s=300,marker="X")
+        ax.scatter(sgrad[quar_indices][0], scurv[quar_indices][0], c=col, s=300,
+                   marker="X")
 
-def setDisplayParam(field,evolutionType,yscale,zone,figures_path):
+
+def setDisplayParam(field, zone, figures_path):
     displayParam = {}
 
     strUnit, txtField = unit_and_field(field)
     txtEvol = "Phase portrait from"
 
-    txt_title_format = "%s %s\n (Source: Johns Hopkins University)"
-    title_and_y_axis(displayParam, field, strUnit, txtEvol, txtField,
-                     txt_title_format)
+    title_and_y_axis(displayParam, strUnit, txtEvol, txtField,
+                     "%s %s\n (Source: Johns Hopkins University)")
 
-    png_format = "%s_phase_diagram_Covid19_%s_%s_for_%s.png"
-    file_yscale(displayParam, figures_path, png_format, txtEvol, txtField, yscale, zone)
+    name = file_name(figures_path, "%s_phase_diagram_Covid19_%s_%s_for_%s.png",
+                     txtEvol, txtField, zone)
+    displayParam['FileName'] = name
     return displayParam
 
 
@@ -117,9 +121,9 @@ def main():
 
 
     # Initialisation
-    dataParam = loadData(path,field,evolutionType,vSmoothing,startDate=startDate)
-    displayParam = setDisplayParam(field,evolutionType,yscale,zone,figures_path)
-    fitParam = setFitExtraParam(field,fittingPeriod, extrapolPeriod,dataParam,iExtrapol)
+    ensure_figures_directory_exists(figures_path)
+    data = load_data(path, start_date=startDate)
+    displayParam = setDisplayParam(field, zone, figures_path)
 
     # Set graphic objects
     close(1)
@@ -134,13 +138,13 @@ def main():
         areas = ["World"]
 
     for area in areas:
-        quar_date = dataParam['Confinement'].get(area, '1/1/99')
-        plot_phase_country(area, dataParam, displayParam, fitParam, quar_date,
-                           ax)
+        quar_date = data['Confinement'].get(area, '1/1/99')
+        plot_phase_country(area, data, quar_date, ax,
+                           field, vSmoothing, yscale)
 
     # Add graph decorations
     ax.set_title(displayParam['title'])
-    ax.set_yscale(displayParam['YScale'])
+    ax.set_yscale(yscale)
     ax.set_xlabel(r'Gradient [new case/day]')
     ax.set_ylabel(r'Curvature [new case/day$^2$]')
     ax.legend(loc=2)
