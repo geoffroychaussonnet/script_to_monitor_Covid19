@@ -19,13 +19,13 @@ from covid_utils import *
 from covid_utils import file_name
 
 
-def plot_phase_country(area, data, quar_date, ax, field, smoothing, y_scale):
+def plot_phase_country(area, data, quar_date, ax, field, smooth, y_scale):
     print("########## Treating country: {0:^18} ###########".format(area))
     filter_date = data['FilterDate']
 
     # Extract evolution for this country
     curvature = evolution_country(area, data, field,
-                                  SmoothedCurvature(*smoothing),
+                                  SmoothedCurvature(smooth),
                                   filter_date)
     gradient = evolution_country(area, data, field, Daily(), filter_date)
 
@@ -42,12 +42,8 @@ def plot_phase_country(area, data, quar_date, ax, field, smoothing, y_scale):
     quar_indices = dates >= quar_date
 
     # smooth
-    scurv = curvature
-    sgrad = gradient
-    window_length, polyorder = smoothing
-    if window_length != 0:
-        scurv = savgol_filter(curvature, window_length, polyorder)
-        sgrad = savgol_filter(gradient, window_length, polyorder)
+    scurv = smooth(curvature)
+    sgrad = smooth(gradient)
 
     # draw the diagram
     if y_scale == 'log':
@@ -98,16 +94,16 @@ def main():
     #field = "DeathRate"
 
     # Smoothing: (mandatory for phase diagram)
-    smoothing = (9, 3)  # [window size, order of fitting polynomial]
+    smooth = create_smooth(9, 3)  # [window size, order of fitting polynomial]
 
     # Type of zones (see in the execution section)
     zone = "countries"
     #zone = "continents"
-    main_plot(data_path, figures_path, field, start_date, smoothing, yscale,
+    main_plot(data_path, figures_path, field, start_date, smooth, yscale,
               zone)
 
 
-def main_plot(data_path, figures_path, field, start_date, smoothing, yscale,
+def main_plot(data_path, figures_path, field, start_date, smooth, yscale,
               zone):
     # Initialisation
     ensure_figures_directory_exists(figures_path)
@@ -126,7 +122,7 @@ def main_plot(data_path, figures_path, field, start_date, smoothing, yscale,
     for area in areas:
         quar_date = data['Confinement'].get(area, '1/1/99')
         plot_phase_country(area, data, quar_date, ax,
-                           field, smoothing, yscale)
+                           field, smooth, yscale)
     # Add graph decorations
     ax.set_title(displayParam['title'])
     ax.set_yscale(yscale)

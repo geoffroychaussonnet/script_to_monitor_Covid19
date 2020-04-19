@@ -61,8 +61,8 @@ def get_trend(dates,evol1,fitParam,extParam):
 
 
 def plot_country(area, dataParam, fitParam, quar_date, ax, field,
-                 evolution_type, smoothing, y_scale):
-    print("########## Treating country: %18s ###########" %('{0:^18}'.format(area)))
+                 evolution_type, smooth, y_scale):
+    print("########## Treating country: {0:^18} ###########".format(area))
     filter_date = dataParam['FilterDate']
     quar_date = dateIn(quar_date)
     fittingPeriod, extrapolPeriod, iExtrapol = fitParam
@@ -97,8 +97,7 @@ def plot_country(area, dataParam, fitParam, quar_date, ax, field,
     extParam1.append(dtExtBeg)
     extParam1.append(dtExtEnd)
 
-    window_length, polyorder = smoothing
-    evol1s = savgol_filter(evol1, window_length, polyorder)
+    evol1s = smooth(evol1)
 
     if y_scale == 'log':
         evol1 = np.ma.masked_where(evol1<=0,evol1)
@@ -174,13 +173,13 @@ def main():
 
     extrapol = 0
 
-    smoothing = (5, 3)  # [window size,order of fitting polynomial]
+    smooth = create_smooth(5, 3)  # [window size,order of fitting polynomial]
 
-    main_plot(data_path, figures_path, field, evolution_type, smoothing,
+    main_plot(data_path, figures_path, field, evolution_type, smooth,
               days_interval, extrapol, fitting_period, start_date, yscale)
 
 
-def main_plot(data_path, figures_path, field, evolution_type, smoothing,
+def main_plot(data_path, figures_path, field, evolution_type, smooth,
               days_interval, extrapol, fitting_period, start_date, yscale):
     # Initialisation
     ensure_figures_directory_exists(figures_path)
@@ -195,8 +194,8 @@ def main_plot(data_path, figures_path, field, evolution_type, smoothing,
     areas = ["US", "Italy", "Spain", "Germany", "France"]
     for area in areas:
         quar_date = data['Confinement'].get(area, '1/1/99')
-        plot_country(area, data, fitParam, quar_date, ax,
-                     field, evolution_type, smoothing, yscale)
+        plot_country(area, data, fitParam, quar_date, ax, field,
+                     evolution_type, smooth, yscale)
     for lax in ax:
         if evolution_type == "R0":
             lax.axhline(1)

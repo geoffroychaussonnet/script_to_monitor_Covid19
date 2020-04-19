@@ -290,15 +290,16 @@ class Curvature(EvolutionType):
 
 
 class SmoothedCurvature(EvolutionType):
-    def __init__(self, days, polyorder):
-        self._days = days
-        self._polyorder = polyorder
+    def __init__(self, smooth):
+        """
+        :param smooth: the smooth function
+        """
+        self._smooth = smooth
 
     def evolution(self, cumulative_evolution):
         # np.diff #1
         evolution = np.diff(cumulative_evolution)
-        smoothed_evolution = savgol_filter(evolution, self._days,
-                                           self._polyorder)
+        smoothed_evolution = self._smooth(evolution)
         # np.diff #2
         evolution = np.zeros(len(cumulative_evolution))
         evolution[2:] = np.diff(smoothed_evolution)
@@ -310,16 +311,34 @@ class SmoothedCurvature(EvolutionType):
 
 
 class R0(EvolutionType):
-    def __init__(self, days, polyorder):
-        self._days = days
-        self._polyorder = polyorder
+    def __init__(self, smooth):
+        """
+        :param smooth: the smooth function
+        """
+        self._smooth = smooth
 
     def evolution(self, cumulative_evolution):
         evolution = np.zeros(len(cumulative_evolution))
         delta = np.diff(cumulative_evolution)
-        smoothed_delta = savgol_filter(delta, self._days, self._polyorder)
+        smoothed_delta = self._smooth(delta)
         evolution[1:] = smoothed_delta/np.roll(smoothed_delta, 5)
 
     @property
     def text(self):
         return 'R0 from'
+
+
+def create_smooth(days, polyorder):
+    """
+    Create a smooth function.
+    :param days: see scipy.signal.savgol_filter window_length
+    :param polyorder: see scipy.signal.savgol_filter
+    :return: the smooth function
+    """
+    if days <= 0:
+        def smooth(x):
+            return x
+    else:
+        def smooth(x):
+            return savgol_filter(x, days, polyorder)
+    return smooth

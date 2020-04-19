@@ -57,7 +57,7 @@ def get_trend(dates,evol1,fitParam,extParam):
 
 
 def plot_country(area, data, fitParam, quar_date, ax, field,
-                 smoothing, evolution_type, y_scale):
+                 smooth, evolution_type, y_scale):
     print("########## Treating country: {0:^18} ###########".format(area))
     filter_date = data['FilterDate']
     quar_date = dateIn(quar_date)
@@ -92,12 +92,10 @@ def plot_country(area, data, fitParam, quar_date, ax, field,
     extParam1.append(dtExtBeg)
     extParam1.append(dtExtEnd)
 
-    window_length, polyorder = smoothing
-    if window_length != 0:
-        evol1 = savgol_filter(evol1, window_length, polyorder)
+    evol1 = smooth(evol1)
 
     if y_scale == 'log':
-        evol1 = np.ma.masked_where(evol1<=0,evol1)
+        evol1 = np.ma.masked_where(evol1 <= 0, evol1)
     p = ax.semilogy(date_axis, evol1, ls='-', lw=4.0, label=area)
     col = p[0].get_color()
 
@@ -162,7 +160,7 @@ def main():
     # Extrapolate data before and after lockdown (0=no, 1=yes)
     extrapol = 0
 
-    smoothing = (0, 3)
+    smooth = create_smooth(0, 3)
 
     # Type of zones (see in the execution section)
     #zone = "continents"
@@ -170,11 +168,11 @@ def main():
     ################ Parameters to define manually (END) ######################
 
     # Initialisation
-    main_plot(data_path, figures_path, field, evolution_type, smoothing,
+    main_plot(data_path, figures_path, field, evolution_type, smooth,
               days_interval, fitting_period, extrapol, start_date, yscale, zone)
 
 
-def main_plot(data_path, figures_path, field, evolution_type, smoothing,
+def main_plot(data_path, figures_path, field, evolution_type, smooth,
               days_interval, fitting_period, extrapol, start_date, yscale,
               zone):
     ensure_figures_directory_exists(figures_path)
@@ -193,7 +191,7 @@ def main_plot(data_path, figures_path, field, evolution_type, smoothing,
         areas = ["World"]
     for area in areas:
         quar_date = data['Confinement'].get(area, '1/1/99')
-        plot_country(area, data, fitParam, quar_date, ax, field, smoothing,
+        plot_country(area, data, fitParam, quar_date, ax, field, smooth,
                      evolution_type, yscale)
     # Add graph decorations
     if evolution_type == "R0":

@@ -54,8 +54,9 @@ def get_trend(dates,evol1,fitParam,extParam):
     return xcorrel1, correl1, strRate
 
 
-def scatter_curvature_vs_x_world(data, ax, field, evolution_type, smoothing, xaxis_type):
-    print("########## Treating country: %18s ###########" %('{0:^18}'.format("World")))
+def scatter_curvature_vs_x_world(data, ax, field, evolution_type, smooth,
+                                 xaxis_type):
+    print("########## Treating country: {0:^18} ###########".format("World"))
     filter_date = data['FilterDate']
     lstDoneCountry = []
     matCountry = []
@@ -73,8 +74,7 @@ def scatter_curvature_vs_x_world(data, ax, field, evolution_type, smoothing, xax
     lstFoundCountry = []
     for area, evol0 in zip(lstDoneCountry, matCountry):
         check = (evol0 > 100)
-        window_length, polyorder = smoothing
-        evol = savgol_filter(evol0, window_length, polyorder)
+        evol = smooth(evol0)
 
         locPeriod = sum(check)
         if locPeriod > 2:
@@ -113,7 +113,7 @@ def scatter_curvature_vs_x_world(data, ax, field, evolution_type, smoothing, xax
             ax.annotate(cntry, xy=(x,-y), xytext=(3, 3), textcoords="offset points", ha='center', va='bottom',color=col2,weight='bold')
 
 
-def plot_country(strCountry, data, fitParam, quar_date, ax,
+def plot_country(strCountry, data, fitParam, quar_date, ax, smooth,
                  field, evolution_type, y_scale):
     print("########## Treating country: {0:^18} ###########".format(strCountry))
     filter_date = data['FilterDate']
@@ -150,9 +150,7 @@ def plot_country(strCountry, data, fitParam, quar_date, ax,
     extParam1.append(dtExtBeg)
     extParam1.append(dtExtEnd)
 
-    window_length, polyorder = smoothing
-    if window_length != 0:
-        evol1 = savgol_filter(evol1, window_length, polyorder)
+    evol1 = smooth(evol1)
 
     if y_scale == 'log':
         evol1 = np.ma.masked_where(evol1<=0,evol1)
@@ -216,18 +214,18 @@ def main():
     evolution_type = Cumulative()
     #evolution_type = Daily()
 
-    smoothing = (7, 3)  # [window size,order of fitting polynomial]
+    smooth = create_smooth(7, 3)  # [window size,order of fitting polynomial]
 
     xaxis_type = "Number of days since > 100 confirmed cases [day]"
     #xaxis_type = "Gradient of total confirmed [case/day]"
     #xaxis_type = "Total confirmed cases [case]"
     ################ Parameters to define manually ######################
 
-    main_plot(data_path, figures_path, field, evolution_type, smoothing,
+    main_plot(data_path, figures_path, field, evolution_type, smooth,
               xaxis_type, start_date, yscale)
 
 
-def main_plot(data_path, figures_path, field, evolution_type, smoothing,
+def main_plot(data_path, figures_path, field, evolution_type, smooth,
               xaxis_type, start_date, yscale):
     # Initialisation
     ensure_figures_directory_exists(figures_path)
@@ -237,9 +235,8 @@ def main_plot(data_path, figures_path, field, evolution_type, smoothing,
     close(1)
     fig = figure(num=1, figsize=(10, 6))
     ax = fig.add_subplot(111)
-    scatter_curvature_vs_x_world(data, ax, field,
-                                 evolution_type,
-                                 smoothing, xaxis_type)
+    scatter_curvature_vs_x_world(data, ax, field, evolution_type, smooth,
+                                 xaxis_type)
     # ax.set_title(displayParam['title'])
     ax.set_xscale(yscale)
     ax.set_yscale(yscale)
