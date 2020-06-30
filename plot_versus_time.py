@@ -145,13 +145,13 @@ def main():
     start_date = datetime.date(2020, 3, 1)   # Start date of the plot:
     fitting_period = 8       # On how long do we fit the data?
 
-    #yscale = 'linear'
-    yscale = 'log'
+    yscale = 'linear'
+    #yscale = 'log'
 
     # Type of value to analyse:
-    field = "Confirmed"
+    #field = "Confirmed"
     #field = "Deaths"
-    #field = "Active"
+    field = "Active"
     #field = "DeathRate"
     #field = "Recovered"
 
@@ -163,7 +163,7 @@ def main():
     #evolution_type = "R0"  # (Experimental)
 
     # Smoothing: (set window size to 0 to deactivate)
-    smoothing = (0, 3)  # [window size,order of fitting polynomial]
+    smoothing = (7, 3)  # [window size,order of fitting polynomial]
 
     # Extrapolate data before and after lockdown (0=no, 1=yes) 
     extrapol = 0
@@ -200,6 +200,15 @@ def main_plot(data_path, figures_path, field, evolution_type, smoothing,
         plot_country(area, data, fitParam, quar_date, ax, field, smoothing,
                      evolution_type, yscale)
 
+    # Display only the first day of the month in x-axis for time span > 2 months
+    timespan = (dateIn(data['DateAxis'][-1]) - dateIn(data['DateAxis'][0])).days
+    if timespan > 61:
+        pruned_axis = []
+        for locdate in data['DateAxis']:
+            dday = int(locdate.split("/")[1])
+            if dday == 1 or dday == 16:
+                pruned_axis.append(locdate)
+
     # Add graph decorations
     if evolution_type == "R0":
         ax.axhline(1)
@@ -208,6 +217,7 @@ def main_plot(data_path, figures_path, field, evolution_type, smoothing,
     ax.set_xlabel("Date")
     ax.xaxis.set_major_locator(ticker.MultipleLocator(days_interval))
     ax.xaxis.set_minor_locator(ticker.MultipleLocator(1))
+    if timespan  >61: ax.set_xticks(pruned_axis)
     ax.set_ylabel(displayParam['YaxisLabel'])
     ax.legend(loc=2)
     ax.grid(which='major', color='grey', linestyle='-', linewidth=1)
