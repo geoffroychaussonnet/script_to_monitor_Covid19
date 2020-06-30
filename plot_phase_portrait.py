@@ -119,7 +119,7 @@ def main_plot(data_path, figures_path, field, start_date, smoothing, yscale,
     fig = figure(num=1, figsize=(10, 6))
     ax = fig.add_subplot(111)
     if zone == "continents":
-        areas = ["EU", "China", "US"]
+        areas = ["EU", "China", "US", "Africa"]
     elif zone == "countries":
         areas = ["Italy", "Spain", "Germany", "France", "Korea, South", "US"]
     else:

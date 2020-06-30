@@ -50,6 +50,9 @@ def cumulative_evolution_single(area, data):
             country_values[np.isnan(country_values.tolist())] = 0
             evolution[:] += country_values.astype(int)
 
+    if sum(evolution) == 0: 
+        print("Warning, ", country, "has zero case. Probably wrong name")
+
     return evolution
 
 
@@ -76,6 +79,17 @@ def _get_countries(area):
                      "Bulgaria", "Ukraine", "Belarus", "Latvia", "Estonia",
                      "Lithuania", "Moldova", "North Macedonia", "Kosovo",
                      "Montenegro", "Iceland", "Cyprus"}
+    elif area == "European continent+Russia":
+        countries = {"France", "Germany", "Spain", "Italy", "Netherlands",
+                     "Portugal", "Belgium", "Sweden", "Finland", "Greece",
+                     "Ireland", "United Kingdom", "Norway", "Switzerland",
+                     "Poland", "Andorra", "Luxembourg", "Liechtenstein",
+                     "Malta", "San Marino", "Holy See", "Monaco", "Hungary",
+                     "Czechia", "Slovakia", "Slovenia", "Croatia",
+                     "Bosnia and Herzegovina", "Serbia", "Albania", "Romania",
+                     "Bulgaria", "Ukraine", "Belarus", "Latvia", "Estonia",
+                     "Lithuania", "Moldova", "North Macedonia", "Kosovo",
+                     "Montenegro", "Iceland", "Cyprus", "Russia"}
     elif area == "Africa":
         countries = {"Morocco", "Tunisia", "Algeria", "Lybia", "Egypt", "Mali",
                      "Niger", "Chad", "Sudan", "Ethiopia", "Mauritania",
@@ -87,6 +101,12 @@ def _get_countries(area):
                      "Eswatini", "Zimbabwe", "Mozambique", "Zambia",
                      "Madagascar", "Burundi", "Kenya", "Uganda", "Somalia",
                      "South Sudan", "Cote d'Ivoire", "Rwanda", "Djibouti"}
+    elif area == "North-America":
+        countries = {"US", "Canada"}
+    elif area == "South-America":
+        countries = {"Brazil", "Peru", "Colombia", "Uruguay", "Paraguay",
+                      "Argentina", "Bolivia", "Ecuador", "Venezuela",
+                      "Guyana", "Suriname"}
     else:
         countries = {area}
     return countries
@@ -107,6 +127,8 @@ def evolution_country(area, data, field, evolution_type, filter_date,
         evol_c = cumulative_evolution_single(area, data['Confirmed'])
         evol_d = cumulative_evolution_single(area, data['Deaths'])
         cumulative_evolution = evol_d/evol_c*100
+    elif field=="Recovered":
+        cumulative_evolution = evolution_single(area, dataParam['Recovered'])
     else:
         raise ValueError(field)
 
@@ -174,6 +196,8 @@ def unit_and_field(field):
         txtField = "deaths"
     elif field == "Active":
         txtField = "active cases"
+    elif field == "Recovered":
+        txtField = "recoveries"
     elif field == "DeathRate":
         txtField = "death rate"
         strUnit = "[%]"

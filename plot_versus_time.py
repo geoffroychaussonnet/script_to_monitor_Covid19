@@ -145,18 +145,19 @@ def main():
     start_date = datetime.date(2020, 3, 1)   # Start date of the plot:
     fitting_period = 8       # On how long do we fit the data?
 
-    yscale = 'linear'
-    #yscale = 'log'
+    #yscale = 'linear'
+    yscale = 'log'
 
     # Type of value to analyse:
-    #field = "Confirmed"
-    field = "Deaths"
+    field = "Confirmed"
+    #field = "Deaths"
     #field = "Active"
     #field = "DeathRate"
+    #field = "Recovered"
 
     # Type of evolution:
-    #evolution_type = "cumulative"
-    evolution_type = "daily"
+    evolution_type = "cumulative"
+    #evolution_type = "daily"
     #evolution_type = "curvature"
     #evolution_type = "smoothedCurvature"
     #evolution_type = "R0"  # (Experimental)
@@ -168,8 +169,8 @@ def main():
     extrapol = 0
 
     # Type of zones (see in the execution section)
-    #zone = "continents"
-    zone = "countries"
+    zone = "continents"
+    #zone = "countries"
     ################ Parameters to define manually (END) ######################
 
     # Initialisation
@@ -189,7 +190,7 @@ def main_plot(data_path, figures_path, field, evolution_type, smoothing,
     fig = figure(num=1, figsize=(10, 6))
     ax = fig.add_subplot(111)
     if zone == "continents":
-        areas = ["EU", "China", "US", "Africa"]
+        areas = ["European continent+Russia", "China", "North-America", "South-America", "Africa"]
     elif zone == "countries":
         areas = ["US", "Italy", "Spain", "Germany", "France"]
     else:
@@ -198,6 +199,7 @@ def main_plot(data_path, figures_path, field, evolution_type, smoothing,
         quar_date = data['Confinement'].get(area, '1/1/99')
         plot_country(area, data, fitParam, quar_date, ax, field, smoothing,
                      evolution_type, yscale)
+
     # Add graph decorations
     if evolution_type == "R0":
         ax.axhline(1)
